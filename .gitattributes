@@ -1,5 +1,11 @@
+# Pastikan line ending composer.lock selalu LF
+composer.lock text eol=lf
+
+# Untuk file PHP dan text lainnya (opsional)
+*.php text eol=lf
+*.js text eol=lf
+*.css text eol=lf
 * text=auto
-*.css linguist-vendored
-*.scss linguist-vendored
-*.js linguist-vendored
+*.scss text eol=lf
+*.js text eol=lf
 CHANGELOG.md export-ignore

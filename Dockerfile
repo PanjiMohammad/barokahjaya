@@ -24,10 +24,6 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Install dependencies Laravel
 RUN composer install --no-dev --optimize-autoloader
 
-# Dockerfile (tambahkan di akhir)
-RUN php artisan config:cache
-RUN php artisan migrate --force
-
 # Set permission folder Laravel agar bisa menulis log/cache
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html \

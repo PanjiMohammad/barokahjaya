@@ -4,7 +4,11 @@ FROM php:8.0-apache
 # Install dependensi sistem
 RUN apt-get update && apt-get install -y \
     libzip-dev unzip zip git curl \
-    && docker-php-ext-install zip pdo pdo_mysql
+    libfreetype6-dev \
+    libjpeg62-turbo-dev \
+    libpng-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install zip pdo pdo_mysql gd
 
 # Aktifkan modul Apache rewrite
 RUN a2enmod rewrite

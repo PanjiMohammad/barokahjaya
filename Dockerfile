@@ -1,14 +1,13 @@
 # Gunakan base image PHP 8.0 dengan Apache
 FROM php:8.0-apache
 
-# Install dependensi sistem
+# Install dependensi sistem dan ekstensi PHP yang dibutuhkan
 RUN apt-get update && apt-get install -y \
     libzip-dev unzip zip git curl \
-    libfreetype6-dev \
-    libjpeg62-turbo-dev \
-    libpng-dev \
+    libfreetype6-dev libjpeg62-turbo-dev libpng-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install zip pdo pdo_mysql gd
+    && docker-php-ext-install -j$(nproc) gd zip pdo pdo_mysql \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Aktifkan modul Apache rewrite
 RUN a2enmod rewrite

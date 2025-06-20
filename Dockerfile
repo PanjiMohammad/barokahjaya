@@ -12,6 +12,9 @@ RUN apt-get update && apt-get install -y \
 # Aktifkan modul Apache rewrite
 RUN a2enmod rewrite
 
+# Ubah DocumentRoot Apache ke /public (folder Laravel)
+RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
+
 # Set direktori kerja
 WORKDIR /var/www/html
 

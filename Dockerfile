@@ -34,7 +34,6 @@ RUN chown -R www-data:www-data /var/www/html \
 
 # Jalankan Laravel cache untuk konfigurasi, route, dan view
 RUN php artisan config:cache && \
-    php artisan route:cache && \
     php artisan view:cache
 
 # Buka port 80 (Apache)

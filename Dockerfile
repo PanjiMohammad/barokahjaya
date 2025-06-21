@@ -30,7 +30,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader
 
 # Install dependency frontend Laravel (Vite, Tailwind, dll)
-RUN if [ -f "package.json" ]; then npm install && npm run build; fi
+RUN if [ -f "package.json" ]; then npm install && npm install; fi
 
 # Salin .env jika belum ada
 RUN if [ ! -f ".env" ] && [ -f ".env.example" ]; then cp .env.example .env; fi

@@ -32,5 +32,10 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html \
     && chmod -R 775 storage bootstrap/cache
 
+# Jalankan Laravel cache untuk konfigurasi, route, dan view
+RUN php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan view:cache
+
 # Buka port 80 (Apache)
 EXPOSE 80

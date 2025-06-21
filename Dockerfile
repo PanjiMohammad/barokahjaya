@@ -36,10 +36,13 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 775 storage bootstrap/cache
 
 # Generate APP_KEY, cache config, view
-RUN php artisan key:generate && \
+RUN if [ -f ".env" ]; then \
+    php artisan key:generate && \
+    php artisan config:clear && \
     php artisan config:cache && \
     php artisan view:cache && \
-    php artisan optimize:clear
+    php artisan optimize:clear ; \
+fi
 
 # Buka port 80 (Apache)
 EXPOSE 80

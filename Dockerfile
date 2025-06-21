@@ -21,6 +21,9 @@ WORKDIR /var/www/html
 # Copy semua file project Laravel ke container
 COPY . /var/www/html
 
+# Copy .env.example jadi .env agar key:generate tidak error
+RUN cp .env.example .env
+
 # Copy Composer dari image resmi
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 

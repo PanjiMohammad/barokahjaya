@@ -149,7 +149,7 @@
 @section('js')
     <script>
         $(document).ready(function(){
-            
+
             $.extend($.fn.dataTable.defaults, {
                 autoWidth: false,
                 autoLength: false,
@@ -168,7 +168,7 @@
                     var $lengthMenu = $('#categoryTable_length select').addClass('form-control form-control-sm');
 
                     $lengthMenu.parent().addClass('d-flex align-items-center');
-                    
+
                     $('#categoryTable_length').addClass('d-flex align-items-center');
                 }
             });
@@ -178,8 +178,8 @@
                 ajax: {
                     url: url,
                     beforeSend: function() {
-                        $('.loader-area').block({ 
-                            message: '<i class="fa fa-spinner fa-spin"></i> Loading...', 
+                        $('.loader-area').block({
+                            message: '<i class="fa fa-spinner fa-spin"></i> Loading...',
                             overlayCSS: {
                                 backgroundColor: '#fff',
                                 opacity: 0.8,
@@ -226,9 +226,9 @@
                     method: "POST",
                     data: $(this).serialize(),
                     beforeSend: function() {
-                        $('#addCategoryModal').modal('hide'); 
-                        $('.loader-area').block({ 
-                            message: '<i class="fa fa-spinner fa-spin"></i> Loading...', 
+                        $('#addCategoryModal').modal('hide');
+                        $('.loader-area').block({
+                            message: '<i class="fa fa-spinner fa-spin"></i> Loading...',
                             overlayCSS: {
                                 backgroundColor: '#fff',
                                 opacity: 0.8,
@@ -239,10 +239,10 @@
                                 padding: 0,
                                 backgroundColor: 'none'
                             }
-                        }); 
+                        });
                     },
                     complete: function(){
-                        $('.loader-area').unblock(); 
+                        $('.loader-area').unblock();
                     },
                     success: function(response){
                         $('#addCategoryModal').modal('hide'); // Hide the modal
@@ -251,11 +251,11 @@
                             title: 'Berhasil',
                             text: response.success,
                             icon: 'success',
-                            timer: 2000, 
+                            timer: 2000,
                             showCancelButton: false,
                             showConfirmButton: false,
                             willClose: () => {
-                                table.ajax.reload();
+                                window.location.reload(true);
                             }
                         });
                     },
@@ -276,13 +276,13 @@
                             title: 'Gagal',
                             text: errorMessage,
                             icon: 'error',
-                            timer: 2000, 
+                            timer: 2000,
                             showCancelButton: false,
                             showConfirmButton: false,
                             willClose: () => {
                                 // show modal
-                                $('#addCategoryModal').modal('show'); 
-                                
+                                $('#addCategoryModal').modal('show');
+
                                 if(xhr.status === 500){
                                     window.location.reload(true);
                                 } else {
@@ -309,7 +309,7 @@
                         });
                     }
                 });
-            }); 
+            });
 
             // Edit category
             $('#categoryTable').on('click', '.edit-category', function() {
@@ -351,8 +351,8 @@
                     method: 'PUT',
                     data: $(this).serialize(),
                     beforeSend: function() {
-                        $('.loader-area-edit').block({ 
-                            message: '<i class="fa fa-spinner fa-spin"></i> Loading...', 
+                        $('.loader-area-edit').block({
+                            message: '<i class="fa fa-spinner fa-spin"></i> Loading...',
                             overlayCSS: {
                                 backgroundColor: '#fff',
                                 opacity: 0.8,
@@ -374,11 +374,11 @@
                             title: 'Berhasil',
                             text: response.success,
                             icon: 'success',
-                            timer: 2000, 
+                            timer: 2000,
                             showCancelButton: false,
                             showConfirmButton: false,
                             willClose: () => {
-                                table.ajax.reload(); // Reload the page or update UI as needed
+                               window.location.reload(true); // Reload the page or update UI as needed
                             }
                         });
                     },
@@ -434,7 +434,7 @@
                 var categoryId = $(this).data('category-id');
                 var categoryName = $(this).data('category-name');
                 var deleteUrl = '{{ route("category.destroy", ":id") }}'.replace(':id', categoryId);
-                
+
                 Swal.fire({
                     title: 'Konfirmasi',
                     text: 'Apakah Anda yakin ingin menghapus kategori ' + categoryName + '?',
@@ -454,8 +454,8 @@
                                 "_token": "{{ csrf_token() }}",
                             },
                             beforeSend: function() {
-                                $('.loader-area').block({ 
-                                    message: '<i class="fa fa-spinner fa-spin"></i> Loading...', 
+                                $('.loader-area').block({
+                                    message: '<i class="fa fa-spinner fa-spin"></i> Loading...',
                                     overlayCSS: {
                                         backgroundColor: '#fff',
                                         opacity: 0.8,
@@ -477,7 +477,7 @@
                                         title: 'Berhasil',
                                         text: response.message,
                                         icon: 'success',
-                                        timer: 2000, 
+                                        timer: 2000,
                                         showCancelButton: false,
                                         showConfirmButton: false,
                                         willClose: () => {
@@ -512,7 +512,7 @@
                         });
                     }
                 });
-            });   
+            });
 
         });
     </script>

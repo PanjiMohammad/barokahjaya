@@ -1,5 +1,8 @@
 <?php
 
+use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -10,6 +13,20 @@
 | contains the "web" middleware group. Now create something great!
 |
 */
+
+// intended route version
+// Route::get('/set-intended', function (Request $request) {
+//     $url = $request->query('url');
+
+//     // Validasi URL untuk alasan keamanan (opsional tapi disarankan)
+//     if (!Str::startsWith($url, config('app.url'))) {
+//         abort(403, 'Invalid redirect URL');
+//     }
+
+//     session(['url.intended' => $url]);
+
+//     return response()->json(['message' => 'Intended URL saved']);
+// });
 
 // front index
 Route::get('/', 'Ecommerce\FrontController@index')->name('front.index');
@@ -22,6 +39,7 @@ Route::get('/product/{slug}', 'Ecommerce\FrontController@show')->name('front.sho
 // for member cart
 Route::post('cart', 'Ecommerce\CartController@addToCart')->name('front.cart');
 Route::get('/cart', 'Ecommerce\CartController@listCart')->name('front.list_cart');
+Route::get('/cart/delete', 'Ecommerce\CartController@deleteCart')->name('front.delete_cart');
 Route::post('/cart/update', 'Ecommerce\CartController@updateCart')->name('front.update_cart');
 
 // checkout
@@ -53,6 +71,9 @@ Route::post('logout', 'Auth\LoginController@logout')->name('logout');
 // for Administrator
 Route::group(['prefix' => 'administrator', 'middleware' => 'auth'], function() {
     Route::get('/home', 'HomeController@index')->name('home');
+
+    Route::get('/setting-acount/{id}', 'HomeController@settingAcount')->name('setting.acount');
+    Route::put('/update-acount', 'HomeController@updateAcount')->name('setting.updateAcount');
 
     // Kategori
     Route::get('/category', 'CategoryController@index')->name('category.index');
@@ -97,8 +118,10 @@ Route::group(['prefix' => 'administrator', 'middleware' => 'auth'], function() {
             return redirect('administrator/reports/order');
         });
         Route::get('/order', 'OrderController@orderReport')->name('report.order');
+        Route::get('/order/orderReportDatatables', 'OrderController@getOrderReportDatatables')->name('report.newDatatables');
         Route::get('/reportorder/{daterange}', 'OrderController@orderReportPdf')->name('report.order_pdf');
         Route::get('/return', 'OrderController@returnReport')->name('report.return');
+        Route::get('/return/orderReportReturnDatatables', 'OrderController@returnReportDatatables')->name('return.newDatatables');
         Route::get('/reportreturn/{daterange}', 'OrderController@returnReportPdf')->name('report.return_pdf');
     });
 });
@@ -124,20 +147,35 @@ Route::group(['prefix' => 'member', 'namespace' => 'Ecommerce'], function() {
     Route::get('verify/{token}', 'FrontController@verifyCustomerRegistration')->name('customer.verify');
 
     Route::group(['middleware' => 'customer'], function() {
+        
+        // dashboard
         Route::get('dashboard', 'LoginController@dashboard')->name('customer.dashboard');
+
+        // pesanan
         Route::get('orders', 'OrderController@index')->name('customer.orders');
+        Route::get('orders/getDatatables', 'OrderController@getIndexDatatables')->name('customer.orderDatatables');
         Route::get('orders/{invoice}', 'OrderController@view')->name('customer.view_order');
+
         Route::get('orders/pdf/{invoice}', 'OrderController@pdf')->name('customer.order_pdf');
         Route::post('orders/accept', 'OrderController@acceptOrder')->name('customer.order_accept');
         Route::get('orders/return/{invoice}', 'OrderController@returnForm')->name('customer.order_return');
-        Route::put('orders/return/{invoice}', 'OrderController@processReturn')->name('customer.return');
+        Route::put('orders/return', 'OrderController@processReturn')->name('customer.return');
+        
+        // payment
         Route::get('payment/{invoice}', 'OrderController@paymentForm')->name('customer.paymentForm');
         Route::post('payment/save', 'OrderController@storePayment')->name('customer.savePayment');
+
+        // setting
         Route::get('setting', 'FrontController@customerSettingForm')->name('customer.settingForm');
         Route::post('setting', 'FrontController@customerUpdateProfile')->name('customer.setting');
+
+        // daftar keinginan
         Route::get('wishlists', 'WishlistController@index')->name('customer.wishlist');
+        Route::get('wishlists/getDatatables', 'WishlistController@getWishlistDatatables')->name('customer.wishlistDatatables');
         Route::post('wishlists', 'WishlistController@saveWishlist')->name('customer.save_wishlist');
         Route::delete('wishlists/{id}', 'WishlistController@deleteWishlist')->name('customer.deleteWishlist');
+
+        // logout
         Route::get('logout', 'LoginController@logout')->name('customer.logout'); 
     });
 });

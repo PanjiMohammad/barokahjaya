@@ -61,7 +61,7 @@ class RegisterController extends Controller
             // if (!auth()->guard('customer')->check()) {
             //     Mail::to($request->email)->send(new CustomerRegisterMail($customer, $password));
             // }
-            return response()->json(['success' => 'Registrasi Member Berhasil'], 200);
+            return response()->json(['success' => 'Registrasi berhasil'], 200);
 
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);

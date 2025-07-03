@@ -17,7 +17,7 @@
                     <div class="col-sm-6">
                         <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item">
-                            <a href="#">Produk</a>
+                            <a href="{{ route('produk.newIndex') }}">Produk</a>
                         </li>
                         <li class="breadcrumb-item active">Edit Produk</li>
                         </ol>
@@ -87,7 +87,7 @@
                                         <label for="image">Foto Produk</label>
                                         <!-- show image -->    
                                         <div class="mt-2 mb-2">
-                                            <img src="{{ asset('/imageProducts/' . $product->image) }}" width="100px" height="100px" alt="{{ $product->name }}">
+                                            <img src="{{ asset('/storage/products/' . $product->image) }}" width="100px" height="100px" alt="{{ $product->name }}">
                                         </div>
                                         <!-- end of show image -->
 

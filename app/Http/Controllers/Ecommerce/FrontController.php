@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Ecommerce;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use App\Product;
 use App\Category;
@@ -83,21 +84,31 @@ class FrontController extends Controller
 
     public function customerUpdateProfile(Request $request)
     {
-        $this->validate($request, [
-            'name' => 'required|string|max:100',
-            'phone_number' => 'required|max:15',
-            'address' => 'required|string',
-            'district_id' => 'required|exists:districts,id',
-            'password' => 'nullable|string|min:6'
-        ]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string|max:100',
+                'phone_number' => 'required|max:15',
+                'address' => 'required|string',
+                'district_id' => 'required|exists:districts,id',
+                'password' => 'nullable|string|min:6'
+            ]);
 
-        $user = auth()->guard('customer')->user();
-        $data = $request->only('name', 'phone_number', 'address', 'district_id');
+            if ($validator->fails()) {
+                return response()->json(['error' => 'Validasi gagal, harap periksa kembali', 'errors' => $validator->errors(), 'input' => $request->all()], 422);
+            }
 
-        if ($request->password != '') {
-            $data['password'] = $request->password;
+            $user = auth()->guard('customer')->user();
+            $data = $request->only('name', 'phone_number', 'address', 'district_id');
+
+            if ($request->password != '') {
+                $data['password'] = $request->password;
+            }
+            $user->update($data);
+            // return redirect()->back()->with(['success' => 'Profil berhasil diperbaharui']);
+
+            return response()->json(['success' => 'Profil berhasil diperbarui'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Terjadi kesalahan : ' . $e->getMessage()], 500);
         }
-        $user->update($data);
-        return redirect()->back()->with(['success' => 'Profil berhasil diperbaharui']);
     }
 }

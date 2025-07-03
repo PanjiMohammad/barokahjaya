@@ -31,6 +31,8 @@ class AppServiceProvider extends ServiceProvider
         kita masukkan ecommerce.* yang berarti semua file yang berada didalam folder resources/views/ecommerce. 
         Parameter kedua adalah sumber datanya, maka dalam hal ini adalah CategoryComposer*/
         View::composer('ecommerce.*', 'App\Http\View\CategoryComposer');
+        View::composer('ecommerce.*', 'App\Http\View\OrderComposer');
+        View::composer('ecommerce.*', 'App\Http\View\WishlistComposer');
         View::composer('layouts.*', 'App\Http\View\CartComposer');
     }
 }

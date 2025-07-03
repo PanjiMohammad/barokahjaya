@@ -44,6 +44,7 @@
 							</div>
 							<div class="col-md-12 form-group">
 								<button type="submit" value="submit" class="btn submit_btn">Reset</button>
+                                <a href="{{ route('customer.login') }}">Kembali</a>
 							</div>
 						</form>
 					</div>

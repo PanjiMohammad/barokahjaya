@@ -2751,6 +2751,31 @@ h6 {
     background: transparent;
     color: #1641ff; }
 
+.main_btn_cart {
+  display: inline-block;
+  background: #1641ff;
+  padding: 0px 30px;
+  color: #fff !important;
+  font-family: "Roboto", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 35px;
+  border: 1px solid #1641ff;
+  border-radius: 0px;
+  outline: none !important;
+  box-shadow: none !important;
+  text-align: center;
+  border: 1px solid #1641ff;
+  cursor: pointer;
+  transition: all 300ms linear 0s;
+  border-radius: 5px;
+}
+
+.main_btn_cart:hover {
+  background: transparent;
+  color: #1641ff !important;
+}
+
 .main_btn2 {
   display: inline-block;
   background: #1641ff;
@@ -3254,91 +3279,128 @@ h6 {
 
 .s_product_text {
   margin-left: -15px;
-  margin-top: 65px; }
-  .s_product_text h3 {
-    font-size: 24px;
-    font-weight: 500;
-    color: #222222;
-    margin-bottom: 10px; }
-  .s_product_text h2 {
-    font-size: 24px;
-    font-weight: bold;
-    color: #1641ff;
-    margin-bottom: 15px; }
-  .s_product_text .list li {
-    margin-bottom: 5px; }
-    .s_product_text .list li a {
-      font-size: 14px;
-      font-family: "Roboto", sans-serif;
-      font-weight: normal;
-      color: #555555; }
-      .s_product_text .list li a span {
-        width: 90px;
-        display: inline-block; }
-        .s_product_text .list li a span:hover {
-          color: #555; }
-      .s_product_text .list li a.active {
-        color: #1641ff; }
-        .s_product_text .list li a.active span {
-          color: #555; }
-    .s_product_text .list li:last-child {
-      margin-bottom: 0px; }
-  .s_product_text p {
-    padding-top: 20px;
-    border-top: 1px dotted #d5d5d5;
-    margin-top: 20px;
-    margin-bottom: 70px; }
-  .s_product_text .card_area .main_btn {
-    line-height: 38px;
-    padding: 0px 38px;
-    text-transform: uppercase;
-    margin-right: 10px; }
-  .s_product_text .card_area .icon_btn {
-    margin-right: 10px;
-    background: #f9f9ff;
-    border-radius: 3px;
-    color: #222222;
-    display: inline-block;
-    line-height: 40px;
-    text-align: center;
-    padding: 0px 13px;
-    font-size: 14px; }
-    .s_product_text .card_area .icon_btn:hover {
-      background: #fff;
-      box-shadow: -14.142px 14.142px 20px 0px rgba(0, 0, 0, 0.1); }
+  margin-top: 65px;
+}
+
+.s_product_text h3 {
+  font-size: 24px;
+  font-weight: 500;
+  color: #222222;
+  margin-bottom: 10px;
+}
+
+.s_product_text h2 {
+  font-size: 24px;
+  font-weight: bold;
+  color: #1641ff;
+  margin-bottom: 15px;
+}
+
+.s_product_text .list li {
+  margin-bottom: 5px;
+}
+
+.s_product_text .list li a {
+  font-size: 14px;
+  font-family: "Roboto", sans-serif;
+  font-weight: normal;
+  color: #555555;
+}
+
+.s_product_text .list li a span {
+  width: 90px;
+  display: inline-block;
+}
+
+.s_product_text .list li a span:hover {
+  color: #555;
+}
+
+.s_product_text .list li a.active {
+  color: #1641ff;
+}
+
+.s_product_text .list li a.active span {
+  color: #555;
+}
+
+.s_product_text .list li:last-child {
+  margin-bottom: 0px;
+}
+
+.s_product_text p {
+  padding-top: 20px;
+  border-top: 1px dotted #d5d5d5;
+  margin-top: 20px;
+  margin-bottom: 70px;
+}
+
+.s_product_text .card_area .main_btn {
+  line-height: 38px;
+  padding: 0px 38px;
+  text-transform: uppercase;
+  margin-right: 10px;
+}
+
+.s_product_text .card_area .icon_btn {
+  margin-right: 10px;
+  background: #f9f9ff;
+  border-radius: 3px;
+  color: #222222;
+  display: inline-block;
+  line-height: 40px;
+  text-align: center;
+  padding: 0px 13px;
+  font-size: 14px;
+}
+
+.s_product_text .card_area .icon_btn:hover {
+  background: #fff;
+  box-shadow: -14.142px 14.142px 20px 0px rgba(0, 0, 0, 0.1);
+}
 
 .product_count {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  margin-bottom: 24px;
   position: relative;
-  margin-bottom: 24px; }
-  .product_count label {
-    font-size: 14px;
-    color: #777777;
-    font-family: "Roboto", sans-serif;
-    font-weight: normal;
-    padding-right: 10px; }
-  .product_count input {
-    width: 76px;
-    border: 1px solid #eeeeee;
-    border-radius: 3px;
-    padding-left: 10px; }
-  .product_count button {
-    display: block;
-    border: none;
-    background: transparent;
-    box-shadow: none;
-    cursor: pointer;
-    position: absolute;
-    right: 0px;
-    font-size: 14px;
-    color: #cccccc;
-    transition: all 300ms linear 0s; }
-    .product_count button:hover {
-      color: #222222; }
-  .product_count .increase {
-    top: -4px; }
-  .product_count .reduced {
-    bottom: -1px; }
+}
+
+.product_count input.qty {
+  width: 70px;
+  height: 30px;
+  text-align: center;
+  border: 1px solid #eeeeee;
+  border-radius: 3px;
+  margin: 0;
+  padding-left: 10px;
+}
+
+.product_count .items-count {
+  width: 30px;
+  height: 30px;
+  font-size: 14px;
+  background-color: white;
+  border: 1px solid white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 300ms linear;
+  position: relative;
+}
+
+.product_count .items-count:hover {
+  /* background-color: #ccc; */
+}
+
+.product_count .items-count i {
+  color: #555;
+}
+
+.product_count .items-count:hover i {
+  color: #222;
+}
 
 .product_description_area {
   padding-bottom: 120px;
@@ -3526,32 +3588,49 @@ h6 {
     margin-bottom: 0px; }
   .cart_inner .table tbody tr td .product_count {
     margin-bottom: 0px; }
-    .cart_inner .table tbody tr td .product_count input {
-      width: 100px;
-      padding-left: 30px;
-      height: 40px;
-      outline: none;
-      box-shadow: none; }
-    .cart_inner .table tbody tr td .product_count .increase {
-      top: -2px; }
-      .cart_inner .table tbody tr td .product_count .increase:before {
-        content: "";
-        height: 40px;
-        width: 1px;
-        position: absolute;
-        left: -3px;
-        top: 0px;
-        background: #eeeeee; }
-      .cart_inner .table tbody tr td .product_count .increase:after {
-        content: "";
-        height: 1px;
-        width: 30px;
-        position: absolute;
-        left: -3px;
-        top: 22px;
-        background: #eeeeee; }
-    .cart_inner .table tbody tr td .product_count .reduced {
-      bottom: -6px; }
+    .cart_inner .table tbody tr td .product_count input.qty {
+  width: 70px;
+  height: 30px;
+  text-align: center;
+  border: 1px solid #eeeeee;
+  border-radius: 3px;
+  margin: 0;
+  padding-left: 10px;
+}
+
+.cart_inner .table tbody tr td .product_count .quantity-btn {
+  width: 30px;
+  height: 30px;
+  font-size: 14px;
+  background-color: white;
+  border: 1px solid white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 300ms linear;
+  position: relative;
+}
+
+.cart_inner .table tbody tr td .product_count .increase {
+  top: 0;
+}
+
+.cart_inner .table tbody tr td .product_count .reduced {
+  bottom: 0;
+}
+
+.cart_inner .table tbody tr td .product_count .quantity-btn:hover {
+  background-color: #ccc;
+}
+
+.cart_inner .table tbody tr td .product_count .quantity-btn i {
+  color: #555;
+}
+
+.cart_inner .table tbody tr td .product_count .quantity-btn:hover i {
+  color: #222;
+}
 .cart_inner .table tbody tr.bottom_button .gray_btn {
   line-height: 38px;
   background: #f9f9ff;
@@ -3679,9 +3758,7 @@ h6 {
     padding: 0px 15px;
     margin-bottom: 20px; }
 .cart_inner .table tbody tr.out_button_area .checkout_btn_inner {
-  margin-left: 0px; 
-  display: flex;
-  justify-content: space-between;
+  margin-left: -310px;
 }
   .cart_inner .table tbody tr.out_button_area .checkout_btn_inner .main_btn {
     height: 40px;
@@ -3689,6 +3766,35 @@ h6 {
     line-height: 38px;
     display: inline-block;
     text-transform: uppercase; }
+  .cart_inner .table tbody tr.out_button_area .checkout_btn_inner .gray_btn {
+    height: 40px;
+    padding: 0px 40px;
+    line-height: 38px;
+    display: inline-block;
+    color: #222222;
+    text-transform: uppercase; }
+
+.gray_btn_cart {
+  display: inline-block;
+  margin-right: 15px;
+  background: #f9f9ff;
+  padding: 0px 30px;
+  color: #222222;
+  font-family: "Roboto", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 48px;
+  border: 1px solid gray;
+  border-radius: 0px;
+  outline: none !important;
+  box-shadow: none !important;
+  text-align: center;
+  cursor: pointer;
+  transition: all 300ms linear 0s;
+  border-radius: 5px; }
+  .gray_btn_cart:hover {
+    background: transparent;
+    color: #222222; }
 
 .gray_btn {
   margin-right: 20px;
@@ -3701,6 +3807,7 @@ h6 {
   color: #222222;
   text-transform: uppercase;
   font-weight: 500; }
+  
 
 /* End Cart Area css
 ============================================================================================ */
@@ -3838,8 +3945,23 @@ h6 {
 .billing_details .contact_form .form-group {
   margin-bottom: 20px; }
   .billing_details .contact_form .form-group input {
-    border-radius: 3px;
-    color: #777777; }
+    height: 54px;
+    border: none;
+    border-bottom: 1px solid #cccccc;
+    border-radius: 0px;
+    outline: none;
+    box-shadow: none;
+    padding: 0 5px; /* Padding for the dropdown itself */
+  }
+  .billing_details .contact_form .form-group select {
+    height: 54px;
+    border: none;
+    border-bottom: 1px solid #cccccc;
+    border-radius: 0px;
+    outline: none;
+    box-shadow: none;
+    padding: 0 5px; /* Padding for the dropdown itself */
+  }
     .billing_details .contact_form .form-group input.placeholder {
       color: #777777; }
     .billing_details .contact_form .form-group input:-moz-placeholder {
@@ -3849,9 +3971,14 @@ h6 {
     .billing_details .contact_form .form-group input::-webkit-input-placeholder {
       color: #777777; }
   .billing_details .contact_form .form-group textarea {
-    height: 150px;
-    border-radius: 3px;
-    margin-top: 15px; }
+    height: 100px; /* Bisa disesuaikan dengan kebutuhan */
+    border: none;
+    border-bottom: 1px solid #cccccc;
+    border-radius: 0px;
+    outline: none;
+    box-shadow: none;
+    padding: 0 5px;
+  }
   .billing_details .contact_form .form-group .country_select {
     width: 100%; }
     .billing_details .contact_form .form-group .country_select span {
@@ -4050,7 +4177,8 @@ h6 {
   box-shadow: 0px 10px 30px 0px rgba(0, 0, 0, 0.07);
   height: 100%;
   text-align: center;
-  padding-top: 115px; }
+  padding-top: 115px; 
+  padding-bottom: 115px;}
   .login_form_inner h3 {
     color: #222222;
     text-transform: uppercase;
@@ -4099,6 +4227,74 @@ h6 {
   display: block; }
 
 /* End Login form Area css
+============================================================================================ */
+/* Setting Account form Area css
+============================================================================================ */
+
+.setting_form_inner {
+  height: 100%;
+}
+
+.setting_form_inner h3 {
+  color: #222222;
+  text-transform: uppercase;
+  font-size: 18px;
+  margin-bottom: 80px;
+}
+
+.setting_form_inner .setting_form {
+  max-width: auto;
+  margin: auto;
+}
+
+.setting_form_inner.reg_form {
+  padding-top: 60px;
+}
+
+.setting_form_inner.reg_form h3 {
+  margin-bottom: 70px;
+}
+
+.setting_form_inner .form-group input {
+  height: 54px;
+  border: none;
+  border-bottom: 1px solid #cccccc;
+  border-radius: 0px;
+  outline: none;
+  box-shadow: none;
+  padding: 0 5px; /* Padding for the dropdown itself */
+}
+
+.setting_form_inner .form-group textarea {
+  height: 100px; /* Bisa disesuaikan dengan kebutuhan */
+  border: none;
+  border-bottom: 1px solid #cccccc;
+  border-radius: 0px;
+  outline: none;
+  box-shadow: none;
+  padding: 0 5px;
+}
+
+.setting_form_inner .form-group select {
+  height: 54px;
+  border: none;
+  border-bottom: 1px solid #cccccc;
+  border-radius: 0px;
+  outline: none;
+  box-shadow: none;
+  padding: 0 5px; /* Padding for the dropdown itself */
+}
+
+.setting_form_inner .form-group select:focus {
+  outline: none;
+}
+
+
+.setting_form_inner .form-group select option {
+  border: none;
+}
+
+/* End Setting Account form Area css
 ============================================================================================ */
 /* Tracking Form Area css
 ============================================================================================ */

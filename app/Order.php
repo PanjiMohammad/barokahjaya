@@ -27,7 +27,7 @@ class Order extends Model
 
     public function return()
     {
-        return $this->hasOne(OrderReturn::class);
+        return $this->hasMany(OrderReturn::class);
     }
 
     public function customer()

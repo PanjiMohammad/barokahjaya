@@ -112,7 +112,7 @@
                             
                             <td>
                                 Invoice : <strong>#{{ $order->invoice }}</strong><br>
-                                {{ $order->created_at->format('d-m-Y') }}<br>
+                                {{ \Carbon\Carbon::parse($order->created_at)->locale('id')->translatedFormat('l, d F Y') }}<br>
                             </td>
                         </tr>
                     </table>
@@ -151,13 +151,13 @@
             </tr>
             
             @foreach ($order->details as $row)
-            <tr class="item">
-                <td>
-                    {{ $row->product->name }}<br>
-                    <strong>Harga</strong>: Rp {{ number_format($row->price) }} x {{ $row->qty }}
-                </td>
-                <td>Rp {{ number_format($row->price * $row->qty) }}</td>
-            </tr>
+                <tr class="item">
+                    <td>
+                        {{ $row->product->name }}<br>
+                        <strong>Harga</strong>: Rp {{ number_format($row->price, 0, ',', '.') }} x {{ $row->qty }}
+                    </td>
+                    <td>Rp {{ number_format($row->price * $row->qty, 0, ',', '.') }}</td>
+                </tr>
             @endforeach
             
             <tr class="total">
@@ -170,40 +170,40 @@
             <tr class="total">
                 <td></td>
                 <td>
-                   Kurir {{ $order->shipping }}: Rp. {{ number_format($order->cost) }}
+                   Kurir {{ $order->shipping }}: Rp. {{ number_format($order->cost, 0, ',', '.') }}
                 </td>
             </tr>
             
             <tr class="total">
                 <td></td>
                 <td>
-                  Total: Rp. {{ number_format($order->total) }}
+                  Total: Rp. {{ number_format($order->total, 0, ',', '.') }}
                 </td>
             </tr>
 
             @if ($order->payment)
-            <tr class="total">
-                <td></td>
-                <td>
-                   Pembayaran: Rp. {{ number_format($order->payment->amount) }}
-                </td>
-            </tr>
-            <tr>
-                <td><strong>Detail Pembayaran</strong></td>
-                <td></td>
-            </tr>
-            <tr>
-                <td>Pengirim: {{ $order->payment->name }}</td>
-                <td></td>
-            </tr>
-            <tr>
-                <td>Transfer ke: {{ $order->payment->transfer_to }}</td>
-                <td></td>
-            </tr>
-            <tr>
-                <td>Tanggal: {{ $order->payment->transfer_date  }}</td>
-                <td></td>
-            </tr>
+                <tr class="total">
+                    <td></td>
+                    <td>
+                    Pembayaran: Rp. {{ number_format($order->payment->amount, 0, ',', '.') }}
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>Detail Pembayaran</strong></td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Pengirim: {{ $order->payment->name }}</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Transfer ke: {{ $order->payment->transfer_to }}</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>Tanggal: {{ \Carbon\Carbon::parse($order->payment->transfer_date)->locale('id')->translatedFormat('l, d F Y')  }}</td>
+                    <td></td>
+                </tr>
             @endif
         </table>
     </div>

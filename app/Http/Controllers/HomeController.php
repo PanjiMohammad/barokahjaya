@@ -7,6 +7,8 @@ use App\Order;
 use App\Customer;
 use App\Product;
 use App\Category;
+use App\User;
+use Illuminate\Support\Facades\Validator;
 
 class HomeController extends Controller
 {
@@ -38,5 +40,42 @@ class HomeController extends Controller
         $products = Product::get();
         
         return view('home', compact('orders','customers', 'categories', 'products'));
+    }
+
+    public function settingAcount($id){
+        $user = User::find($id);
+        return view('setting.setting', compact('user'));
+    }
+    
+    public function updateAcount(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'name' => 'required|string|max:100',
+                'email' => 'required|email',
+                'password' => 'nullable|string|min:5'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(['error' => 'Validasi gagal, Harap periksa kembali', 'errors' => $validator->errors(), 'input' => $request->all()], 422);
+            }
+    
+            $user = User::find($request->user_id);
+            if (!$user) {
+                return response()->json(['error' => 'Pengguna tidak ditemukan'], 404);
+            }
+            $data = $request->only('name', 'email');
+    
+            if ($request->password != '') {
+                $data['password'] = $request->password;
+            }
+
+            $user->update($data);
+
+            return response()->json(['success' => 'Profil berhasil diperbarui', 'redirect' => route('home')], 200);
+            // return redirect()->back()->with(['success' => 'Profil berhasil diperbaharui']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Terjadi kesalahan : ' . $e->getMessage()], 500);
+        }
     }
 }

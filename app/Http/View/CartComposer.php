@@ -10,6 +10,7 @@ class CartComposer
     {
         $carts = json_decode(request()->cookie('e-carts'), true);
         $carts = $carts != '' ? $carts:[];
+
         return $carts;
     }
 
@@ -18,6 +19,7 @@ class CartComposer
         $carts = $this->getCarts();
         $cart_total = collect($carts)->count();
 
-        $view->with('cart_total', $cart_total);
+        $view->with('cart_total', $cart_total)
+             ->with('cart', $carts);
     }
 }

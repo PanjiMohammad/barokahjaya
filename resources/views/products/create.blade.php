@@ -16,7 +16,9 @@
                 </div><!-- /.col -->
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item"><a href="#">Produk</a></li>
+                        <li class="breadcrumb-item">
+                            <a href="{{ route('produk.newIndex') }}">Produk</a>
+                        </li>
                         <li class="breadcrumb-item active">Tambah Produk</li>
                     </ol>
                 </div><!-- /.col -->

@@ -12,13 +12,73 @@ use DB;
 use PDF;
 use App\OrderReturn;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+use DataTables;
 
 class OrderController extends Controller
 {
     public function index()
     {
-        $orders = Order::withCount(['return'])->where('customer_id', auth()->guard('customer')->user()->id)->orderBy('created_at', 'DESC')->paginate(10);
-        return view('ecommerce.orders.index', compact('orders'));
+        return view('ecommerce.orders.index');
+    }
+
+    public function getIndexDatatables(Request $request)
+    {
+        // get customer id
+        $customerIds = auth()->guard('customer')->user()->id;
+
+        $orders = Order::withCount(['return'])->where('customer_id', $customerIds)->orderBy('created_at', 'DESC')->get();
+
+        return DataTables::of($orders)
+            ->addColumn('action', function ($order) use (&$index) {
+                static $index = 0;
+                $index++;
+
+                $detailUrl = route('customer.view_order', $order->invoice);
+                $returnUrl = route('customer.order_return', $order->invoice);
+                $acceptForm = '';
+ 
+                if ($order->status == 3 && $order->return_count == 0) {
+                    $acceptForm = '
+                        <form action="' . route('customer.order_accept') . '" id="acceptOrder" method="POST">
+                            ' . csrf_field() . '
+                            <button type="submit" class="btn btn-success btn-sm mr-1" data-order-id="'.$order->id.'" title="Terima pesanan '. $order->invoice .'">
+                                <i class="fas fa-check"></i>
+                            </button>
+                        </form>
+                        <a href="' . $returnUrl . '" class="btn btn-danger btn-sm" title="Kembalikan pesanan '. strtoupper($order->invoice) .'">
+                            <i class="fas fa-xmark"></i>
+                        </a>
+                    ';
+                }
+
+                return '
+                    <div class="d-flex align-items-center">
+                        <a href="' . $detailUrl . '" class="btn btn-primary btn-sm mr-1" title="Lihat detail pesanan '. strtoupper($order->invoice) .'">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        ' . $acceptForm . '
+                    </div>
+                ';
+            })
+            ->editColumn('invoice', function($order){
+                return strtoupper($order->invoice);
+            })
+            ->editColumn('details', function ($order) {
+                return $order->customer_name;
+            })
+            ->editColumn('amount', function ($order) {
+                return 'Rp ' . number_format($order->total, 0, ',', '.');
+            })
+            ->addColumn('status', function ($order) {
+                return $order->status_label;
+            })
+            ->editColumn('dates', function ($order) {
+                return Carbon::parse($order->created_at)->locale('id')->translatedFormat('l, d F Y');
+            })
+            ->rawColumns(['action', 'status'])
+            ->make(true);
     }
 
     public function view($invoice)
@@ -57,77 +117,135 @@ class OrderController extends Controller
 
     public function storePayment(Request $request)
     {
-        $this->validate($request, [
+        // Validate the incoming request
+        $validator = Validator::make($request->all(), [
             'invoice' => 'required|exists:orders,invoice',
             'name' => 'required|string',
             'transfer_to' => 'required|string',
             'transfer_date' => 'required',
-            'amount' => 'required',
+            'amount1' => 'required',
             'proof' => 'required|image|mimes:jpg,png,jpeg'
         ]);
+
+        // Check if the validation fails
+        if ($validator->fails()) {
+            return response()->json(['error' => 'Validasi gagal, Harap periksa kembali', 'errors' => $validator->errors(), 'input' => $request->all()], 422);
+        }
 
         //DEFINE DATABASE TRANSACTION UNTUK MENGHINDARI KESALAHAN SINKRONISASI DATA JIKA TERJADI ERROR DITENGAH PROSES QUERY
         DB::beginTransaction();
         try {
             $order = Order::where('invoice', $request->invoice)->first();
             
-            if ($order->total != $request->amount) return redirect()->back()->with(['error' => 'Error, Pembayaran Harus Sama Dengan Tagihan']);
+            if ($order->total != $request->amount) {
+                // return redirect()->back()->with(['error' => 'Error, Pembayaran Harus Sama Dengan Tagihan']);
+                return response()->json(['error' => 'Error, Pembayaran Harus Sama Dengan Tagihan'], 400);
+            }
 
             if ($order->status == 0 && $request->hasFile('proof')) {
                 $file = $request->file('proof');
                 $filename = time() . '.' . $file->getClientOriginalExtension();
-                $destinationPath = public_path('/proof/');
-                $file->move($destinationPath, $filename);
+                $file->storeAs('public/proof', $filename);
 
                 Payment::create([
                     'order_id' => $order->id,
                     'name' => $request->name,
                     'transfer_to' => $request->transfer_to,
-                    'transfer_date' => Carbon::parse($request->transfer_date)->format('Y-m-d'),
+                    'transfer_date' => Carbon::now('Asia/Jakarta')->format('Y-m-d H:i:s'),
                     'amount' => $request->amount,
                     'proof' => $filename,
                     'status' => false
                 ]);
                 
                 $order->update(['status' => 1]);
-                //JIKA TIDAK ADA ERROR, MAKA COMMIT UNTUK MENANDAKAN BAHWA TRANSAKSI BERHASIL
                 DB::commit();
-                return redirect()->route('customer.view_order', $order->invoice)->with(['success' => 'Pesanan Dikonfirmasi']);
+                // return redirect()->route('customer.view_order', $order->invoice)->with(['success' => 'Pesanan Dikonfirmasi']);
+
+                return response()->json(['success' => 'Pembayaran berhasil, Pesanan dikonfirmasi', 'redirect' => route('customer.view_order', $order->invoice)], 200);
             }
-            return redirect()->back()->with(['error' => 'Error, Upload Bukti Transfer']);
+
+            // return redirect()->back()->with(['error' => 'Error, Upload Bukti Transfer']);
+
+            return response()->json(['error' => 'Error, Upload Bukti Transfer'], 400);
         } catch(\Exception $e) {
             DB::rollback();
-            return redirect()->back()->with(['error' => $e->getMessage()]);
+            return response()->json(['error' => 'Terjadi kesalahan : ' . $e->getMessage()], 500);
         }
     }
 
     public function pdf($invoice) 
     {
-        $order = Order::with(['district.city.province', 'details', 'details.product', 'payment'])
-                ->where('invoice', $invoice)->first();
-        if(Order::where('invoice', $invoice)->exists()) {
-            if(\Gate::forUser(auth()->guard('customer')->user())->allows('order-view', $order)) {
-                $pdf = PDF::loadView('ecommerce.orders.pdf', compact('order'));
-                $filename = $order->invoice;
-                return $pdf->download($filename.'-invoice.pdf');
-            }else {
+        try {
+            $order = Order::with(['district.city.province', 'details', 'details.product', 'payment'])
+                ->where('invoice', $invoice)
+                ->first();
+
+            if (!$order) {
+                return response()->json(['error' => 'File PDF tidak ditemukan'], 404);
+            }
+
+            if (!\Gate::forUser(auth()->guard('customer')->user())->allows('order-view', $order)) {
                 return redirect(route('customer.orders'))->with(['error' => 'Anda Tidak Diizinkan Untuk Mengakses Invoice Orang Lain']);
             }
-        } else {
-            return redirect(route('customer.orders'))->with(['error' => 'Invoice Tidak ada dalam Orderan Anda']);
+
+            $baseName = $order->invoice . '-invoice.pdf';
+            $folderPath = 'public/docs/members/invoice/';
+            $storagePath = $folderPath . $baseName;
+
+            // Cek dan ubah nama jika file sudah ada
+            $i = 1;
+            while (Storage::exists($storagePath)) {
+                $baseName = $order->invoice . '-invoice (' . $i . ').pdf';
+                $storagePath = $folderPath . $baseName;
+                $i++;
+            }
+
+            // Simpan file di storage
+            $pdf = PDF::loadView('ecommerce.orders.pdf', compact('order'));
+            Storage::put($storagePath, $pdf->output());
+
+            if(request()->ajax()) {
+                return response()->json(['success' => 'PDF berhasil diunduh'], 200);
+            }   
+
+            // Download ke browser
+            return response()->download(storage_path('app/' . $storagePath), $baseName);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Terjadi kesalahan : ' . $e->getMessage()], 500);
         }
     }
 
     public function acceptOrder(Request $request)
     {
-        $order = Order::find($request->order_id);
+        try {
+            // Validasi awal
+            $validated = $request->validate([
+                'order_id' => 'required|exists:orders,id'
+            ]);
 
-        if (!\Gate::forUser(auth()->guard('customer')->user())->allows('order-view', $order)) {
-            return redirect()->back()->with(['error' => 'Bukan Pesanan Kamu']);
+            $order = Order::find($validated['order_id']);
+
+            if (!$order) {
+                return response()->json(['error' => 'Pesanan tidak ditemukan'], 404);
+            }
+
+            // Cek otorisasi
+            if (!\Gate::forUser(auth()->guard('customer')->user())->allows('order-view', $order)) {
+                return response()->json(['error' => 'Bukan pesanan kamu'], 403);
+            }
+
+            // Cek status
+            if ($order->status != 3) {
+                return response()->json(['error' => 'Pesanan tidak dalam status "dikirim"'], 400);
+            }
+
+            // Update status ke '4' = Sampai
+            $order->update(['status' => 4]);
+
+            return response()->json(['success' => 'Pesanan berhasil dikonfirmasi sebagai diterima','order_status' => 4]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Terjadi kesalahan : ' . $e->getMessage()], 500);
         }
-        //pesanan diterima
-        $order->update(['status' => 4]);
-        return redirect()->back()->with(['success' => 'Pesanan Dikonfirmasi']);
     }
 
     public function returnForm($invoice)
@@ -144,36 +262,50 @@ class OrderController extends Controller
         return redirect()->back()->with(['error' => 'Anda Tidak Diizinkan Untuk Mengakses Return Order Orang Lain']);
     }
 
-    public function processReturn(Request $request, $id)
+    public function processReturn(Request $request)
     {
-        $this->validate($request, [
-            'reason' => 'required|string',
-            'refund_transfer' => 'required|string',
-            'photo' => 'required|image|mimes:jpg,png,jpeg'
-        ]);
-
-        $return = OrderReturn::where('order_id', $id)->first();
-        if ($return) return redirect()->back()->with(['error' => 'Permintaan Refund Dalam Proses']);
-
-        if ($request->hasFile('photo')) {
-             $file = $request->file('photo');
-            $filename = time() . '.' . $file->getClientOriginalExtension();
-            $destinationPath = public_path('/returns/');
-            $file->move($destinationPath, $filename);
-           
-            OrderReturn::create([
-                'order_id' => $id,
-                'photo' => $filename,
-                'reason' => $request->reason,
-                'refund_transfer' => $request->refund_transfer,
-                'status' => 0
+        try {
+            $validator = Validator::make($request->all(), [
+                'reason' => 'required|string',
+                'refund_transfer' => 'required|string',
+                'photo' => 'required|image|mimes:jpg,png,jpeg'
             ]);
 
-            $order = Order::find($id); 
-            //kirim pesan return
-            $this->sendMessage($order->invoice, $request->reason); 
+            if ($validator->fails()) {
+                return response()->json(['error' => 'Validasi gagal, Harap periksa kembali', 'errors' => $validator->errors(), 'input' => $request->all()], 422);
+            }
 
-            return redirect()->route('customer.orders')->with(['success' => 'Permintaan Refund Dikirim']);
+            $order = Order::find($request->order_id); 
+            $return = OrderReturn::where('order_id', $request->order_id)->first();
+            if ($return) {
+                return redirect()->back()->with(['error' => 'Permintaan Refund Dalam Proses']);
+            }
+
+            if($request->refund_transfer != $order->subtotal){
+                return response()->json(['error' => 'Nominal yang dimasukkan tidak sesuai dengan subtotal'], 400);
+            }
+
+            if ($request->hasFile('photo')) {
+                $file = $request->file('photo');
+                $filename = time() . '.' . $file->getClientOriginalExtension();
+                $file->storeAs('public/returns', $filename);
+            
+                OrderReturn::create([
+                    'order_id' => $request->order_id,
+                    'photo' => $filename,
+                    'reason' => $request->reason,
+                    'refund_transfer' => $request->refund_transfer,
+                    'status' => 0
+                ]);
+
+                //kirim pesan return
+                // $this->sendMessage($order->invoice, $request->reason); 
+
+                // return redirect()->route('customer.orders')->with(['success' => 'Permintaan Refund Dikirim']);
+                return response()->json(['success' => 'Berhasil mengirim permintaan refund', 'redirect' => route('customer.orders')], 200);
+            }
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Terjadi kesalahan : ' . $e->getMessage()], 500);
         }
     }
 

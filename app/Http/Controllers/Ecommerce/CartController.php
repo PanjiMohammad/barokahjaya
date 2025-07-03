@@ -16,6 +16,8 @@ use DB;
 use App\Mail\CustomerRegisterMail;
 use Mail;
 use Illuminate\Support\Facades\Http;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Validator;
 
 class CartController extends Controller
 {
@@ -28,29 +30,42 @@ class CartController extends Controller
 
     public function addToCart(Request $request)
     {
-        $this->validate($request, [
-            'product_id' => 'required|exists:products,id', 
-            'qty' => 'required|integer' 
-        ]);
+        try {
+            $this->validate($request, [
+                'product_id' => 'required|exists:products,id', 
+                'qty' => 'required|integer' 
+            ]);
 
-        $carts = json_decode($request->cookie('e-carts'), true); 
-    
-        if ($carts && array_key_exists($request->product_id, $carts)) {
-            $carts[$request->product_id]['qty'] += $request->qty;
-        } else {
-            $product = Product::find($request->product_id);
-            $carts[$request->product_id] = [
-                'qty' => $request->qty,
-                'product_id' => $product->id,
-                'product_name' => $product->name,
-                'product_price' => $product->price,
-                'product_image' => $product->image,
-                'weight' => $product->weight
-            ];
+            $carts = json_decode($request->cookie('e-carts'), true); 
+            
+            // get customer
+            $customer = auth()->guard('customer')->user();
+
+            if (!$customer) {
+                return response()->json(['error' => 'Harap login / registrasi terlebih dahulu untuk melanjutkan transaksi', 'redirect' => route('customer.login')], 401);
+            }
+            // Load the 'district' relationship only if the customer exists.
+            $customer->load('district');
+        
+            if ($carts && array_key_exists($request->product_id, $carts)) {
+                $carts[$request->product_id]['qty'] += $request->qty;
+            } else {
+                $product = Product::find($request->product_id);
+                $carts[$request->product_id] = [
+                    'qty' => $request->qty,
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'product_price' => $product->price,
+                    'product_image' => $product->image,
+                    'weight' => $product->weight
+                ];
+            }
+
+            $cookie = cookie('e-carts', json_encode($carts), 2880);
+            return response()->json(['success' => 'Berhasil menambahkan produk ke keranjang'])->cookie($cookie);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Terjadi kesalahan : ' . $e->getMessage()], 500);
         }
-
-        $cookie = cookie('e-carts', json_encode($carts), 2880);
-        return redirect()->back()->with(['success' => 'Produk Ditambahkan ke Keranjang'])->cookie($cookie);
     }
 
     public function listCart()
@@ -65,21 +80,46 @@ class CartController extends Controller
 
     public function updateCart(Request $request)
     {
-        $carts = $this->getCarts();
+        try {
+            $carts = $this->getCarts();
 
-        if($request->product_id == ''){
-            return redirect()->route('front.product');
-        }else{
-            foreach ($request->product_id as $key => $row) {
-                if ($request->qty[$key] == 0) {
-                    unset($carts[$row]);
-                } else {
-                    $carts[$row]['qty'] = $request->qty[$key];
-                }
+            $productId = $request->input('product_id');
+            $qty = (int) $request->input('qty');
+
+            if (!$productId || !isset($carts[$productId])) {
+                return response()->json(['error' => 'Produk tidak ditemukan dalam keranjang.'], 404);
             }
-            $cookie = cookie('e-carts', json_encode($carts), 2880);
-            return redirect()->back()->cookie($cookie);
+
+            if ($qty <= 0) {
+                unset($carts[$productId]);
+            } else {
+                $carts[$productId]['qty'] = $qty;
+            }
+
+            // Hitung ulang subtotal
+            $subtotal = collect($carts)->sum(function ($item) {
+                return $item['product_price'] * $item['qty'];
+            });
+
+            $cookie = cookie('e-carts', json_encode($carts), 2880); // 2 hari
+
+            return response()->json([
+                'success' => 'Keranjang berhasil diperbarui',
+                'subtotal' => $subtotal,
+                'formatted_subtotal' => 'Rp ' . number_format($subtotal, 0, ',', '.')
+            ])->cookie($cookie);
+
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function deleteCart(Request $request)
+    {
+        $carts = $this->getCarts(); 
+        $cookie = cookie('e-carts', json_encode([]));
+
+        return response()->json(['success' => true, 'message' => 'Pesanan dalam keranjang berhasil dihapus.'])->withCookie($cookie);
     }
 
     public function getCourier(Request $request)
@@ -110,6 +150,10 @@ class CartController extends Controller
         $provinces = Province::orderBy('created_at', 'DESC')->get();
         $carts = $this->getCarts(); 
 
+        if (empty($carts) || count($carts) === 0) {
+            return redirect(route('front.index'))->with(['error' => 'Silahkan pilih barang untuk melanjutkan transaksi']);
+        }
+
         // set customer
         $customer = null;
         if(auth()->guard('customer')->check()){
@@ -139,7 +183,7 @@ class CartController extends Controller
 
     public function processCheckout(Request $request)
     {
-        $this->validate($request, [
+        $validator = Validator::make($request->all(), [
             'customer_name' => 'required|string|max:100',
             'customer_phone' => 'required',
             'email' => 'required|email',
@@ -150,38 +194,27 @@ class CartController extends Controller
             'courier' => 'required',
         ]);
 
-        //DATABASE TRANSACTION BERFUNGSI UNTUK MEMASTIKAN SEMUA PROSES SUKSES UNTUK KEMUDIAN DI COMMIT AGAR DATA BENAR BENAR DISIMPAN, JIKA TERJADI ERROR MAKA KITA ROLLBACK AGAR DATANYA SELARAS
+        if ($validator->fails()) {
+            return response()->json(['error' => 'Validasi gagal, Harap periksa kembali', 'errors' => $validator->errors(), 'input' => $request->all()], 422);
+        }
+
         DB::beginTransaction();
         try {
+            
             $customer = Customer::where('email', $request->email)->first();
-            //JIKA DIA TIDAK LOGIN DAN DATA CUSTOMERNYA ADA
             if (!auth()->guard('customer')->check() && $customer) {
                 return redirect()->back()->with(['error' => 'Silahkan Login Terlebih Dahulu']);
             }
 
             $carts = $this->getCarts();
-            
+
             $subtotal = collect($carts)->sum(function($q) {
                 return $q['qty'] * $q['product_price'];
             });
 
-            if (!auth()->guard('customer')->check()) {
-                $password = Str::random(8); 
-                $customer = Customer::create([
-                    'name' => $request->customer_name,
-                    'email' => $request->email,
-                    'password' => $password, 
-                    'phone_number' => $request->customer_phone,
-                    'address' => $request->customer_address,
-                    'district_id' => $request->district_id,
-                    'activate_token' => Str::random(30),
-                    'status' => false
-                ]);
-            }
-
             // $shipping = explode('-', $request->courier);
             $order = Order::create([
-                'invoice' => Str::random(4) . '-' . time(), 
+                'invoice' => strtoupper(Str::random(4)) . '-' . Carbon::now('Asia/Jakarta')->format('YmdHis'), 
                 'customer_id' => $customer->id,
                 'customer_name' => $request->customer_name,
                 'customer_phone' => $request->customer_phone,
@@ -193,9 +226,7 @@ class CartController extends Controller
             ]);
 
             foreach ($carts as $row) {
-                //AMBIL DATA PRODUK BERDASARKAN PRODUCT_ID
                 $product = Product::find($row['product_id']);
-                //SIMPAN DETAIL ORDER
                 OrderDetail::create([
                     'order_id' => $order->id,
                     'product_id' => $row['product_id'],
@@ -205,21 +236,16 @@ class CartController extends Controller
                 ]);
             }
             
-            //TIDAK TERJADI ERROR, MAKA COMMIT DATANYA UNTUK MENINFORMASIKAN BAHWA DATA SUDAH FIX UNTUK DISIMPAN
             DB::commit();
 
             $carts = [];
             $cookie = cookie('e-carts', json_encode($carts), 2880);
-            
-            if (!auth()->guard('customer')->check()) {
-                Mail::to($request->email)->send(new CustomerRegisterMail($customer, $password));
-            }
-            return redirect(route('front.finish_checkout', $order->invoice))->cookie($cookie);
+            // return redirect(route('front.finish_checkout', $order->invoice))->cookie($cookie);
+            return response()->json(['success' => 'Berhasil checkout pesanan', 'redirect' => route('front.finish_checkout', $order->invoice)])->cookie($cookie);
         } catch (\Exception $e) {
-            //JIKA TERJADI ERROR, MAKA ROLLBACK DATANYA
             DB::rollback();
-            //DAN KEMBALI KE FORM TRANSAKSI SERTA MENAMPILKAN ERROR
-            return redirect()->back()->with(['error' => $e->getMessage()]);
+            // return redirect()->back()->with(['error' => $e->getMessage()]);
+            return response()->json(['error' => 'Terjadi kesalahan : ' . $e->getMessage()], 500);
         }
     }
 

@@ -35,7 +35,7 @@
 								<div class="card-body">
 									<h3>Belum Dibayar</h3>
 									<hr>
-									<p>Rp {{ number_format($orders[0]->pending) }}</p>
+									<p>Rp {{ number_format($orders[0]->pending, 0, ',', '.') }}</p>
 								</div>
 							</div>
 						</div>

@@ -13,7 +13,8 @@ class Payment extends Model
     {
         if ($this->status == 0) {
             return '<span class="badge badge-secondary">Menunggu Konfirmasi</span>';
+        } else {
+            return '<span class="badge badge-success">Diterima</span>';
         }
-        return '<span class="badge badge-success">Diterima</span>';
     }
 }

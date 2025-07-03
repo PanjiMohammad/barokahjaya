@@ -10,6 +10,13 @@
 		<div class="overlay"></div>
 		<div class="banner_inner d-flex align-items-center">
 			<div class="container">
+				@if (session('success'))
+					<input type="hidden" id="success-message" value="{{ session('success') }}">
+				@endif
+	
+				@if (session('error'))
+					<input type="hidden" id="error-message" value="{{ session('error') }}">
+				@endif
 				<div class="banner_content row">
 					<div class="offset-lg-2 col-lg-8">
 						<a class="white_bg_btn" href="{{route('front.product')}}">Lihat Produk</a>
@@ -67,7 +74,7 @@
 					<div class="col col1">
 						<div class="f_p_item">
 							<div class="f_p_img">
-                				<img class="img-fluid" src="{{ asset('/imageProducts/' . $row->image) }}" alt="{{ $row->name }}">
+                				<img class="img-fluid" src="{{ asset('/storage/products/' . $row->image) }}" alt="{{ $row->name }}">
 								<div class="p_icon">
 									<a href="{{ url('/product/' . $row->slug) }}">
 										<i class="lnr lnr-cart"></i>
@@ -79,7 +86,7 @@
                  			<h4>{{ $row->name }}</h4>
 							</a>
 
-              				<h5>Rp {{ number_format($row->price) }}</h5>
+              				<h5>Rp {{ number_format($row->price, 0, ',', '.') }}</h5>
 						</div>
 					</div>
          		 @empty
@@ -95,4 +102,36 @@
 		</div>
 	</section>
 	<!--================End Feature Product Area =================-->
+@endsection
+
+@section('js')
+	<script>
+		$(document).ready(function() {
+			// session
+            var successMessage = $('#success-message').val();
+            var errorMessage = $('#error-message').val();
+
+            if (successMessage) {
+				$.toast({
+					heading: 'Berhasil',
+					text: successMessage,
+					showHideTransition: 'slide',
+					icon: 'success',
+					position: 'top-right',
+					hideAfter: 3000
+				});
+            }
+
+            if (errorMessage) {
+				$.toast({
+					heading: 'Error',
+					text: errorMessage,
+					showHideTransition: 'fade',
+					icon: 'error',
+					position: 'top-right',
+					hideAfter: 3000
+				});
+            }
+		});
+	</script>
 @endsection

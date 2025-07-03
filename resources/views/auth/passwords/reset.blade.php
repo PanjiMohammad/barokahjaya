@@ -1,65 +1,150 @@
-@extends('layouts.app')
+@extends('layouts.auth')
+
+@section('title')
+    <title>Reset Password</title>
+@endsection
 
 @section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">{{ __('Reset Password') }}</div>
+    <div class="login-box">
+        <div class="login-logo">
+            <p>Lupa Password</p>
+        </div>
+        
+        <!-- /.login-logo -->
+        <div class="card">
+            <div class="card-body login-card-body">
+                @if (session('success'))
+                    <div class="alert alert-success">{{ session('success') }}</div>
+                @endif
 
-                <div class="card-body">
-                    <form method="POST" action="{{ route('password.update') }}">
-                        @csrf
-
-                        <input type="hidden" name="token" value="{{ $token }}">
-
-                        <div class="form-group row">
-                            <label for="email" class="col-md-4 col-form-label text-md-right">{{ __('E-Mail Address') }}</label>
-
-                            <div class="col-md-6">
-                                <input id="email" type="email" class="form-control @error('email') is-invalid @enderror" name="email" value="{{ $email ?? old('email') }}" required autocomplete="email" autofocus>
-
-                                @error('email')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="form-group row">
-                            <label for="password" class="col-md-4 col-form-label text-md-right">{{ __('Password') }}</label>
-
-                            <div class="col-md-6">
-                                <input id="password" type="password" class="form-control @error('password') is-invalid @enderror" name="password" required autocomplete="new-password">
-
-                                @error('password')
-                                    <span class="invalid-feedback" role="alert">
-                                        <strong>{{ $message }}</strong>
-                                    </span>
-                                @enderror
-                            </div>
-                        </div>
-
-                        <div class="form-group row">
-                            <label for="password-confirm" class="col-md-4 col-form-label text-md-right">{{ __('Confirm Password') }}</label>
-
-                            <div class="col-md-6">
-                                <input id="password-confirm" type="password" class="form-control" name="password_confirmation" required autocomplete="new-password">
-                            </div>
-                        </div>
-
-                        <div class="form-group row mb-0">
-                            <div class="col-md-6 offset-md-4">
-                                <button type="submit" class="btn btn-primary">
-                                    {{ __('Reset Password') }}
-                                </button>
-                            </div>
-                        </div>
-                    </form>
+                @if (session('error'))
+                    <div class="alert alert-danger">{{ session('error') }}</div>
+                @endif
+                <div class="mb-3">
+                    <a href="{{ route('login') }}" style="color: black;"><span class="fa-solid fa-arrow-left"></span> <span class="ml-1">Kembali</span></a>
                 </div>
+
+                <form id="reset-form" action="{{ route('resetPasswordUser') }}" method="post">
+                    @csrf
+                    <div>
+                        <div class="input-group" id="email">
+                            <input class="form-control" type="email" name="email" placeholder="Email" autofocus>
+                            <div class="input-group-append">
+                                <div class="input-group-text">
+                                    <i class="fas fa-at"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="text-danger" id="email_error"></span>
+                    </div>
+                    <div class="form-group mt-3">
+                        <button type="submit" class="btn btn-primary float-right">Reset</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
-</div>
+@endsection
+
+@section('js')
+    <script>
+        $(document).ready(function () {
+
+            // Handle form submission via Ajax
+            $('#reset-form').on('submit', function (e) {
+                e.preventDefault();
+
+                var formData = $(this).serialize();
+
+                $.ajax({
+                    url: $(this).attr('action'),
+                    type: 'POST',
+                    data: formData,
+                    beforeSend: function() {
+                        $('.login-card-body').block({ 
+                            message: '<i class="fa fa-spinner"></i>',
+                            overlayCSS: {
+                                backgroundColor: '#fff',
+                                opacity: 0.8,
+                                cursor: 'wait'
+                            },
+                            css: {
+                                border: 0,
+                                padding: 0,
+                                backgroundColor: 'none'
+                            }
+                        });
+                    },
+                    complete: function(){
+                        $('.login-card-body').unblock();
+                    },
+                    success: function (response) {
+                        Swal.fire({
+                            title: 'Berhasil',
+                            text: response.success,
+                            icon: 'success',
+                            timer: 2000, // Display for 2 seconds
+                            showCancelButton: false,
+                            showConfirmButton: false,
+                            willClose: () => {
+                                window.location.href = "{{ route('login') }}";
+                            }
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        let errors = xhr.responseJSON.errors;
+                        let input = xhr.responseJSON.input;
+
+                        // Clear previous errors
+                        $('.text-danger').text('');
+
+						var response = JSON.parse(xhr.responseText);
+						if (response.error) {
+							errorMessage = xhr.status + ' ' + xhr.statusText + ': ' + response.error;
+						}
+                        Swal.fire({
+                            title: 'Error',
+                            text: errorMessage,
+                            icon: 'error',
+                            timer: 2000, // Display for 2 seconds
+                            showCancelButton: false,
+                            showConfirmButton: false,
+                            willClose: () => {
+                                if(xhr.status == 422) {
+                                    // Display validation errors using SweetAlert
+                                    let errorMessage = '';
+                                    $.each(errors, function(key, error) {
+                                        errorMessage += error[0] + '<br>';
+                                        $('#' + key + '_error').text(error[0]);
+
+                                        $('#' + key).addClass('input-error');
+
+                                        setTimeout(function() {
+                                            $('#' + key + '_error').text('');
+                                            $('#' + key).removeClass('input-error');
+                                        }, 3000);
+                                    });
+
+                                    $.each(input, function(key, value) {
+                                        $('#' + key).val(value);
+                                    });
+                                } else {
+                                    window.location.reload(true);
+                                }
+                            }
+                        });
+					}
+                });
+            });
+
+        });
+    </script>
+@endsection
+
+@section('css')
+    <style>
+        .input-error {
+            border: 1px solid red;
+        }
+    </style>
 @endsection

@@ -16,25 +16,51 @@ class LoginController extends Controller
 {
     public function loginForm()
     {
-        if (auth()->guard('customer')->check()) return redirect(route('customer.dashboard'));
+        // if (auth()->guard('customer')->check()) {
+        //     return redirect()->intended(route('customer.dashboard'));
+        // }
+
+        // $previous = url()->previous();
+
+        // if (!session()->has('url.intended') && !Str::contains($previous, 'login')) {
+        //     session(['url.intended' => $previous]);
+        // }
+
+        if(auth()->guard('customer')->check()){
+            return redirect(route('front.index'))->with(['error' => 'Anda tidak bisa memasuki halaman Login']);
+        }
         return view('ecommerce.login');
     }
 
     public function login(Request $request)
     {
-        $this->validate($request, [
+        $validator = Validator::make($request->all(), [
             'email' => 'required|email',
             'password' => 'required|string'
         ]);
 
-        $auth = $request->only('email', 'password');
-        $auth['status'] = 1; 
-    
-        if (auth()->guard('customer')->attempt($auth)) {
-            return redirect()->intended(route('customer.dashboard'));
+        if ($validator->fails()) {
+            return response()->json(['error' => 'Validasi gagal, Harap periksa kembali', 'errors' => $validator->errors(), 'input' => $request->all()], 422);
         }
 
-        return redirect()->back()->with(['error' => 'Email / Password Salah']);
+        $credentials = $request->only('email', 'password');
+        $credentials['status'] = 1;
+
+        $customer = Customer::where('email', $request->email)->first();
+
+        if($customer === null) {
+            return response()->json(['error' => 'Akun tidak terdaftar, Silahkan registrasi member.'], 404);
+        } else if($customer->status !== 1) {
+            return response()->json(['error' => 'Terjadi kesalahan saat mencoba masuk, Silahkan hubungi admin.'], 404);
+        } else {
+            //
+        }
+
+        if (auth()->guard('customer')->attempt($credentials)) {
+            return response()->json(['success' => 'Login berhasil', 'redirect' => route('customer.dashboard')], 200);
+        } else {
+            return response()->json(['error' => 'Email / Password Salah'], 401);
+        }
     }
 
     public function forgotPassword()
@@ -88,7 +114,7 @@ class LoginController extends Controller
 
     public function logout()
     {
-        auth()->guard('customer')->logout(); 
-        return redirect(route('customer.login'));
+        Auth::guard('customer')->logout();
+        return response()->json(['success' => 'Berhasil Logout', 'redirect' => route('customer.login')], 200);
     }
 }

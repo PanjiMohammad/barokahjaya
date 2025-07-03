@@ -41,7 +41,7 @@
                             </div>
                         </div>
                     </div>
-                     <span class="text-danger" id="password_error"></span>
+                    <span class="text-danger" id="password_error"></span>
                 </div>
                 <div class="row">
                     <div class="col-8">

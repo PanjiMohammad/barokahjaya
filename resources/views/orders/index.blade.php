@@ -28,7 +28,7 @@
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                     <li class="breadcrumb-item">
-                        <a href="#">Home</a>
+                        <a href="{{ route('home') }}">Dasboard</a>
                     </li>
                     <li class="breadcrumb-item active">Pesanan</li>
                     </ol>
@@ -71,7 +71,6 @@
                             </div>
                         </div>
                     </div>
-                    <!-- BAGIAN INI AKAN MENG-HANDLE TABLE LIST CATEGORY  -->
                 </div>
             </div>
         </section>

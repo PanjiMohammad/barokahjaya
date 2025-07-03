@@ -27,6 +27,8 @@ use Carbon\Carbon;
 use PDF;
 use DataTables;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
 {
@@ -82,20 +84,51 @@ class OrderController extends Controller
 
     public function acceptPayment($invoice)
     {
-        $order = Order::with(['payment'])->where('invoice', $invoice)->first();
+        try {
+            $order = Order::with(['payment'])->where('invoice', $invoice)->first();
 
-        $order->payment()->update(['status' => 1]);
-        $order->update(['status' => 2]);
-        return redirect(route('orders.newView', $order->invoice))->with(['success' => 'Pembayaran Sudah dikonfirmasi']);
+            // generate unik id untuk tracking number
+            $uuid = (string) Str::uuid();
+            $trackingNumber = 'TRX-' . strtoupper(substr($uuid, 0, 8));
+
+            $order->payment()->update(['status' => 1]);
+            $order->update([
+                'status' => 2,
+                'tracking_number' => $trackingNumber,
+            ]);
+            // return redirect(route('orders.newView', $order->invoice))->with(['success' => 'Pembayaran Sudah dikonfirmasi']);
+
+            return response()->json(['success' => 'Pembayaran berhasil dikonfirmasi'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Terjadi kesalahan : ' . $e->getMessage()], 500);
+        }
     }
 
     public function shippingOrder(Request $request)
     {
-        $order = Order::with(['customer'])->find($request->order_id);
-        $order->update(['tracking_number' => $request->tracking_number, 'status' => 3]);
+        try {
+            $validator = Validator::make($request->all(), [
+                'tracking_number' => 'required|string|max:100',
+            ]);
 
-        // Mail::to($order->customer->email)->send(new OrderMail($order));
-        return redirect()->back()->with('success', 'Data berhasil dikirim!');
+            if ($validator->fails()) {
+                return response()->json(['error' => 'Validasi gagal, Harap periksa kembali', 'errors' => $validator->errors(), 'input' => $request->all()], 422);
+            }
+
+            $order = Order::with(['customer'])->find($request->order_id);
+        
+            if(!$order){
+                return response()->json(['error' => 'Pesanan tidak ditemukan'], 404);
+            } 
+
+            $order->update(['tracking_number' => $request->tracking_number, 'status' => 3]);
+
+            // Mail::to($order->customer->email)->send(new OrderMail($order));
+            // return redirect()->back()->with('success', 'Data berhasil dikirim!');
+            return response()->json(['success' => 'Pesanan berhasil dikirim'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Terjadi kesalahan : ' . $e->getMessage()], 500);
+        }
     }
 
     public function return($invoice) 
@@ -110,82 +143,192 @@ class OrderController extends Controller
 
     public function approveReturn(Request $request)
     {
-        $this->validate($request, ['status' => 'required']);
+        try {
+            // $this->validate($request, []);
+            $validator = Validator::make($request->all(), [
+                'status' => 'required'
+            ]);
 
-        $order = Order::find($request->order_id);
-        $order->return()->update(['status' => $request->status]);
-        $order->update(['status' => 4]);
-        return redirect()->back();
+            if ($validator->fails()) {
+                return response()->json(['error' => 'Validasi gagal, Harap periksa kembali', 'errors' => $validator->errors(), 'input' => $request->all()], 422);
+            }
+
+            $order = Order::find($request->order_id);
+            $order->return()->update(['status' => $request->status]);
+            $order->update(['status' => 4]);
+            return response()->json(['success' => 'Berhasil memproses permintaan refund', 'redirect' => route('orders.newView', $order->invoice)], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Terjadi kesalahan : ' . $e->getMessage()], 500);
+        }
     }
 
     public function orderReport()
     {
-        $start = Carbon::now()->startOfMonth()->format('Y-m-d H:i:s');
-        $end = Carbon::now()->endOfMonth()->format('Y-m-d H:i:s');
+        return view('report.index');
+    }
 
-        if (request()->date != '') {
-            $date = explode(' - ' ,request()->date);
-            $start = Carbon::parse($date[0])->format('Y-m-d') . ' 00:00:01';
-            $end = Carbon::parse($date[1])->format('Y-m-d') . ' 23:59:59';
-        }
+    public function getOrderReportDatatables(Request $request)
+    {
+        $start = $request->query('start_date') ? Carbon::parse($request->query('start_date'))->startOfDay() : Carbon::now()->startOfMonth()->format('Y-m-d H:i:s');
+        $end = $request->query('end_date') ? Carbon::parse($request->query('end_date'))->endOfDay() : Carbon::now()->endOfMonth()->format('Y-m-d H:i:s');
+
     
-        $orders = Order::with(['customer.district'])->whereBetween('created_at', [$start, $end])->get();
+        $orders = Order::with(['customer.district'])->whereBetween('created_at', [$start, $end])->orderBy('created_at', 'DESC')->get();
 
-        return view('report.index', compact('orders'));
+        return DataTables::of($orders)
+            ->editColumn('dates', function($order) {
+                return Carbon::parse($order->created_at)->locale('id')->translatedFormat('l, d F Y');
+            })
+            ->editColumn('invoice', function($order) {
+                return $order->invoice;
+            })
+            ->addColumn('details', function($order){
+                return '
+                    <div class="d-flex flex-column">
+                        <p class="custom-margin font-weight-bold">
+                            <span>' . $order->customer_name . ' (' . $order->customer->phone_number . ')</span>
+                        </p>
+                        <p class="custom-margin">' . $order->customer->email . '</p>
+                        <p class="custom-margin text-justify" style="white-space: pre-line;">' . $order->customer_address . ', Kecamatan ' . $order->customer->district->name . ', Kota ' . $order->customer->district->city->name . ', ' . $order->customer->district->city->province->name . ', Kode Pos ' . $order->customer->district->city->postal_code . ', Indonesia</p>
+                    </div>
+                ';
+            })
+            ->editColumn('total', function($order){
+                return 'Rp ' . number_format($order->total, 0, ',', '.');
+            })
+            ->rawColumns(['details'])
+            ->make(true);
     }
 
     public function orderReportPdf($daterange)
     {
-        $date = explode('+', $daterange); 
+        try {
+            $date = explode('+', $daterange);
 
-        $start = Carbon::parse($date[0])->format('Y-m-d') . ' 00:00:01';
-        $end = Carbon::parse($date[1])->format('Y-m-d') . ' 23:59:59';
+            $start = Carbon::parse($date[0])->startOfDay()->format('Y-m-d H:i:s');
+            $end = Carbon::parse($date[1])->endOfDay()->format('Y-m-d H:i:s');
 
-        $orders = Order::with(['customer.district'])->whereBetween('created_at', [$start, $end])->get();
-        $pdf = PDF::loadView('report.orderpdf', compact('orders', 'date'));
+            $orders = Order::with(['customer.district'])->whereBetween('created_at', [$start, $end])->get();
+            $startFormatted = Carbon::parse($start)->locale('id')->translatedFormat('l, d F Y');
+            $endFormatted = Carbon::parse($end)->locale('id')->translatedFormat('l, d F Y');
+            $fileName = "Laporan Pesanan Periode {$startFormatted} - {$endFormatted}.pdf";
 
-        $startpdf = Carbon::parse($date[0])->format('d-F-Y');
-        $endpdf = Carbon::parse($date[1])->format('d-F-Y');
-        return $pdf->download('Laporan Order '.$startpdf.' sampai '.$endpdf.'.pdf');
+            $pdf = PDF::loadView('report.orderpdf', compact('orders', 'date'));
+            
+            $storagePath = 'public/docs/reports/reports/';
+            $filePath = $storagePath . $fileName;
+            $i = 1;
+            while (Storage::exists($filePath)) {
+                $fileName = "Laporan Pesanan Periode {$startFormatted} - {$endFormatted} ({$i}).pdf";
+                $filePath = $storagePath . $fileName;
+                $i++;
+            }
+
+            Storage::put($filePath, $pdf->output());
+            if (request()->ajax()) {
+                return response()->json(['success' => 'PDF berhasil dibuat', 'file_url' => asset('storage/docs/reports/reports/' . $fileName)], 200);
+            }
+
+            return $pdf->download($fileName);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Gagal membuat PDF: ' . $e->getMessage()], 500);
+        }
     }
 
     public function returnReport()
     {
-        $start = Carbon::now()->startOfMonth()->format('Y-m-d H:i:s');
-        $end = Carbon::now()->endOfMonth()->format('Y-m-d H:i:s');
+        return view('report.return');
+    }
 
-        if (request()->date != '') {
-            $date = explode(' - ' ,request()->date);
-            $start = Carbon::parse($date[0])->format('Y-m-d') . ' 00:00:01';
-            $end = Carbon::parse($date[1])->format('Y-m-d') . ' 23:59:59';
-        }
-
+    public function returnReportDatatables(Request $request)
+    {
+        $start = $request->query('start_date') ? Carbon::parse($request->query('start_date'))->startOfDay() : Carbon::now()->startOfMonth()->format('Y-m-d H:i:s');
+        $end = $request->query('end_date') ? Carbon::parse($request->query('end_date'))->endOfDay() : Carbon::now()->endOfMonth()->format('Y-m-d H:i:s');
         $orders = Order::with(['customer.district'])->has('return')->whereBetween('created_at', [$start, $end])->get();
-        return view('report.return', compact('orders'));
+   
+        return DataTables::of($orders)
+            ->editColumn('invoice', function($order) {
+                return $order->invoice;
+            })
+            ->addColumn('details', function($order){
+                $returns = optional($order->return->first())->status_label ?? '-';
+                return '
+                    <div class="d-flex flex-column">
+                        <p class="custom-margin font-weight-bold">
+                            <span>Status : ' . $returns . '</span>
+                        </p>
+                        <p class="custom-margin font-weight-bold">
+                            <span>' . $order->customer_name . ' (' . $order->customer->phone_number . ')</span>
+                        </p>
+                        <p class="custom-margin">' . $order->customer->email . '</p>
+                        <p class="custom-margin text-justify" style="white-space: pre-line;">' . $order->customer_address . ', Kecamatan ' . $order->customer->district->name . ', Kota ' . $order->customer->district->city->name . ', ' . $order->customer->district->city->province->name . ', Kode Pos ' . $order->customer->district->city->postal_code . ', Indonesia</p>
+                    </div>
+                ';
+            })
+            ->addColumn('reason', function($order){
+                return optional($order->return->first())->reason ?? '-';
+            })
+            ->editColumn('dates', function($order) {
+                return optional($order->return->first())->created_at 
+                    ? Carbon::parse($order->return->first()->created_at)->locale('id')->translatedFormat('l, d F Y') 
+                    : '-';
+            })
+            ->addColumn('refundTransfer', function($order){
+                $amount = optional($order->return->first())->refund_transfer ?? '0';
+                return 'Rp ' . number_format($amount, 0, ',', '.');
+            })
+            ->rawColumns(['details', 'reason', 'refundTransfer'])
+            ->make(true);
     }
 
     public function returnReportPdf($daterange)
     {
-        $date = explode('+', $daterange);
-        $start = Carbon::parse($date[0])->format('Y-m-d') . ' 00:00:01';
-        $end = Carbon::parse($date[1])->format('Y-m-d') . ' 23:59:59';
+        try {
+            $date = explode('+', $daterange);
 
-        $orders = Order::with(['customer.district'])->has('return')->whereBetween('created_at', [$start, $end])->get();
-        $pdf = PDF::loadView('report.returnpdf', compact('orders', 'date'));
-        
-        $startpdf = Carbon::parse($date[0])->format('d-F-Y');
-        $endpdf = Carbon::parse($date[1])->format('d-F-Y');
-        return $pdf->download('Laporan Return Order '.$startpdf.' sampai '.$endpdf.'.pdf');
+            $start = Carbon::parse($date[0])->startOfDay()->format('Y-m-d H:i:s');
+            $end = Carbon::parse($date[1])->endOfDay()->format('Y-m-d H:i:s');
+
+            $orders = Order::with(['customer.district'])->has('return')->whereBetween('created_at', [$start, $end])->get();
+
+            $startFormatted = Carbon::parse($start)->locale('id')->translatedFormat('l, d F Y');
+            $endFormatted = Carbon::parse($end)->locale('id')->translatedFormat('l, d F Y');
+            $fileName = "Laporan Pengembalian Pesanan Periode {$startFormatted} - {$endFormatted}.pdf";
+
+            $pdf = PDF::loadView('report.returnpdf', compact('orders', 'date'));
+            
+            $storagePath = 'public/docs/reports/returns/';
+            $filePath = $storagePath . $fileName;
+            $i = 1;
+            while (Storage::exists($filePath)) {
+                $fileName = "Laporan Pengembalian Pesanan Periode {$startFormatted} - {$endFormatted} ({$i}).pdf";
+                $filePath = $storagePath . $fileName;
+                $i++;
+            }
+
+            Storage::put($filePath, $pdf->output());
+            if (request()->ajax()) {
+                return response()->json(['success' => 'PDF berhasil dibuat', 'file_url' => asset('storage/docs/reports/returns/' . $fileName)], 200);
+            }
+
+            return $pdf->download($fileName);
+        } catch (\Exception $e) {  
+            return response()->json(['error' => 'Gagal membuat PDF: ' . $e->getMessage()], 500);
+        }
     }
 
     public function destroy($id)
     {
         try {
             $order = Order::find($id);
+            if(!$order){
+                return response()->json(['error' => 'Pesanan tidak ditemukan'], 404);
+            }
+
             $order->details()->delete();
             $order->payment()->delete();
             $order->delete();
-            return response()->json(['success' => 'Order berhasil dihapus'], 200);
+            return response()->json(['success' => 'Pesanan berhasil dihapus'], 200);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Terjadi kesalahan : ' . $e->getMessage()], 500);
         }

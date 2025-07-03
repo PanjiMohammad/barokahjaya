@@ -36,21 +36,21 @@
 							</li>
 							<li>
 								<a href="#">
-                                <span>Tanggal</span> : {{ $order->created_at }}</a>
+                                <span>Tanggal</span> : {{ \Carbon\Carbon::parse($order->created_at)->locale('id')->translatedFormat('l, d F Y H:i') }}</a>
 							</li>
 							<li>
 								<a href="#">
-								  <span>Subtotal</span> : Rp {{ number_format($order->subtotal) }}
+								  <span>Subtotal</span> : Rp {{ number_format($order->subtotal, 0, ',', '.') }}
 								</a>
 							</li>
 							<li>
 								<a href="#">
-								  <span>Ongkos Kirim</span> : Rp {{ number_format($order->cost) }}
+								  <span>Ongkos Kirim</span> : Rp {{ number_format($order->cost, 0, ',', '.') }}
 								</a>
 							</li>
 							<li>
 								<a href="#">
-								  <span>Total</span> : Rp {{ number_format($order->total) }}
+								  <span>Total</span> : Rp {{ number_format($order->total, 0, ',', '.') }}
 								</a>
 							</li>
 						</ul>

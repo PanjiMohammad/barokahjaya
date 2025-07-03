@@ -1,3 +1,12 @@
 #!/bin/bash
+
+# Jalankan migrate hanya saat pertama kali
 php artisan migrate --force
-php -S 0.0.0.0:$PORT -t public
+
+# Serve Laravel dengan memanfaatkan file bawaan Laravel dan akses public/
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+# Gunakan PHP built-in server tapi pastikan -t public ada
+php -S 0.0.0.0:$PORT -t public public/index.php

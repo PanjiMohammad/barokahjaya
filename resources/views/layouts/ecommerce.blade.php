@@ -26,7 +26,7 @@
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-toast-plugin/1.3.2/jquery.toast.min.css">
 	<link rel="stylesheet" href="{{ asset('ecommerce/css/jquery.datatables.css') }}">
 	<link rel="stylesheet" href="{{asset('ecommerce//plugins/daterangepicker/daterangepicker.css')}}">
-	
+
 
 	@yield('orderwa')
 
@@ -60,7 +60,7 @@
 		.badge-warning[href] {
 		background-color: #c67605;
 		}
-		
+
 		#lblCartCount {
 			font-size: 12px;
 			background: #0084ff;
@@ -209,7 +209,7 @@
         .icons:hover + .setting-dropdown, .setting-dropdown:hover {
             display: block;
         }
-		
+
 		.cart-dropdown {
             display: none;
             position: absolute;
@@ -342,7 +342,7 @@
 															<span><a href="{{ route('customer.orders') }}"><i class="fas fa-gear"></i></a></span>
 														</div>
 													</div>
-													
+
 													<div class="mt-2 notification-list">
 														@if(count($productStatusAnnouncements) === 0)
 															<p>Tidak ada pembaruan status produk</p>
@@ -352,7 +352,7 @@
 																$count = 0;
 															@endphp
 															@foreach($productStatusAnnouncements as $announcement)
-																<a href="{{ route('customer.view_order', $announcement['invoice']) }}" style="color: #777;" 
+																<a href="{{ route('customer.view_order', $announcement['invoice']) }}" style="color: #777;"
 																class="{{ $count >= $maxNotifications ? 'hidden-notification' : '' }}">
 																	<div style="border-bottom: 2px solid #ededed; margin-bottom: 10px; padding-bottom: 5px;">
 																		<div class="d-flex align-items-center">
@@ -381,7 +381,7 @@
 																</a>
 																@php $count++; @endphp
 															@endforeach
-										
+
 															@if(count($productStatusAnnouncements) > $maxNotifications)
 																<div class="text-center mt-2">
 																	<a href="javascript:void(0);" id="showAllNotifications" class="main_btn_cart">Lihat Semua</a>
@@ -436,7 +436,7 @@
 															</a>
 															@php $count++; @endphp
 														@endforeach
-														
+
 														@if($getWishlist->count() > $maxWishlists)
 															<div class="text-center mt-2">
 																<a href="javascript:void(0);" id="showAllWishlists" class="main_btn_cart">Lihat Semua</a>
@@ -466,7 +466,7 @@
 														<span>
 															<a href="{{ route('front.list_cart') }}">Lihat Keranjang</a>
 															@if(auth()->guard('customer')->check() && $cart_total > 0)
-																| <a href="{{ route('front.delete_cart') }}" id="delete-cart-btn" class="delete-all-cart">Hapus Pesanan</a>	
+																| <a href="{{ route('front.delete_cart') }}" id="delete-cart-btn" class="delete-all-cart">Hapus Pesanan</a>
 															@endif
 														</span>
 													</div>
@@ -704,7 +704,7 @@
 				<p class="col-lg-12 footer-text text-center">
                     Copyright &copy;<script>document.write(new Date().getFullYear());</script>
                     All rights reserved
-                    
+
 				</p>
 			</div>
 		</div>
@@ -745,9 +745,9 @@
 
 			// delete cart button
 			$('#delete-cart-btn').on('click', function(e) {
-				e.preventDefault(); 
+				e.preventDefault();
 
-				let url = $(this).attr('href'); 
+				let url = $(this).attr('href');
 
 				bootbox.confirm({
 					message: '<i class="fa-solid fa-triangle-exclamation text-warning mr-1"></i> Yakin mau menghapus semua pesanan kamu dalam keranjang ?',
@@ -768,10 +768,10 @@
 								url: url,
 								type: 'GET',
 								data: {
-									_token: '{{ csrf_token() }}' 
+									_token: '{{ csrf_token() }}'
 								},
 								beforeSend: function() {
-									$.blockUI({ 
+									$.blockUI({
 										message: '<i class="fa fa-spinner"></i>',
 										overlayCSS: {
 											backgroundColor: '#fff',
@@ -834,7 +834,7 @@
 					}
 				});
 			});
-			
+
 			// logout
 			$('#customer-logout').on('click', function(event) {
 				console.log('berhasil');
@@ -859,7 +859,7 @@
 								url: "{{ route('customer.logout') }}",
                 				method: 'GET',
 								beforeSend: function() {
-									$.blockUI({ 
+									$.blockUI({
 										message: '<i class="fa fa-spinner"></i>',
 										overlayCSS: {
 											backgroundColor: '#fff',

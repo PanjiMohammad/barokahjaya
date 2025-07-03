@@ -83,7 +83,7 @@ Route::group(['prefix' => 'administrator', 'middleware' => 'auth'], function() {
     Route::delete('/category/delete-category/{id}', 'CategoryController@destroy')->name('category.destroy');
     Route::get('/category/edit-category/{id}', 'CategoryController@edit')->name('category.edit');
     Route::put('/category/update-category/{id}', 'CategoryController@update')->name('category.update');
-    
+
     // Produk
     Route::get('/product', 'ProductController@index')->name('product.newIndex');
     Route::get('/product/datatables', 'ProductController@datatables')->name('product.datatables');
@@ -92,10 +92,10 @@ Route::group(['prefix' => 'administrator', 'middleware' => 'auth'], function() {
     Route::delete('/product/delete-product/{id}', 'ProductController@destroy')->name('product.newDestroy');
     Route::get('/product/edit-product/{id}', 'ProductController@edit')->name('product.newEdit');
     Route::put('/product/update-product', 'ProductController@update')->name('product.newUpdate');
-    Route::get('/product/bulk', 'ProductController@massUploadForm')->name('product.newBulk'); 
+    Route::get('/product/bulk', 'ProductController@massUploadForm')->name('product.newBulk');
     Route::post('/product/bulk', 'ProductController@massUpload')->name('product.newSaveBulk');
     Route::get('/products/{id}', 'ProductController@show')->name('product.newShow');
-    
+
     // Pesanan
     Route::group(['prefix' => 'orders'], function () {
         Route::get('/', 'OrderController@index')->name('orders.newIndex');
@@ -111,7 +111,7 @@ Route::group(['prefix' => 'administrator', 'middleware' => 'auth'], function() {
         Route::get('/return-details/{invoice}/{product_id}', 'OrderController@newReturnDetails')->name('orders.newReturnDetails');
         Route::post('/return', 'OrderController@approveReturn')->name('orders.new_approve_return');
         Route::delete('/{id}', 'OrderController@destroy')->name('orders.newDestroy');
-    }); 
+    });
 
     Route::group(['prefix' => 'reports'], function() {
         Route::match(['get', 'post'], '/', function () {
@@ -147,7 +147,7 @@ Route::group(['prefix' => 'member', 'namespace' => 'Ecommerce'], function() {
     Route::get('verify/{token}', 'FrontController@verifyCustomerRegistration')->name('customer.verify');
 
     Route::group(['middleware' => 'customer'], function() {
-        
+
         // dashboard
         Route::get('dashboard', 'LoginController@dashboard')->name('customer.dashboard');
 
@@ -160,7 +160,7 @@ Route::group(['prefix' => 'member', 'namespace' => 'Ecommerce'], function() {
         Route::post('orders/accept', 'OrderController@acceptOrder')->name('customer.order_accept');
         Route::get('orders/return/{invoice}', 'OrderController@returnForm')->name('customer.order_return');
         Route::put('orders/return', 'OrderController@processReturn')->name('customer.return');
-        
+
         // payment
         Route::get('payment/{invoice}', 'OrderController@paymentForm')->name('customer.paymentForm');
         Route::post('payment/save', 'OrderController@storePayment')->name('customer.savePayment');
@@ -176,6 +176,6 @@ Route::group(['prefix' => 'member', 'namespace' => 'Ecommerce'], function() {
         Route::delete('wishlists/{id}', 'WishlistController@deleteWishlist')->name('customer.deleteWishlist');
 
         // logout
-        Route::get('logout', 'LoginController@logout')->name('customer.logout'); 
+        Route::get('logout', 'LoginController@logout')->name('customer.logout');
     });
 });

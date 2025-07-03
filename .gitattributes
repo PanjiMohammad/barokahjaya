@@ -8,4 +8,5 @@ composer.lock text eol=lf
 * text=auto
 *.scss text eol=lf
 *.js text eol=lf
+*.env.example text eol=lf
 CHANGELOG.md export-ignore

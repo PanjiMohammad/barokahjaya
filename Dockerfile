@@ -54,3 +54,14 @@ RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available
 
 # Buka port 80
 EXPOSE 80
+
+# ===== Tambahkan baris ini untuk menjalankan entrypoint.sh =====
+
+# Salin entrypoint.sh ke dalam container
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# Jadikan executable
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Jalankan script saat container start
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

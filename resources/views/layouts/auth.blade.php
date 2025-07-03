@@ -6,6 +6,7 @@
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="description" content="Barokah Jaya - Aplikasi Ecommerce">
     <meta name="author" content="Barokah Jaya">
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
     <meta name="keyword" content="aplikasi ecommerce laravel, tutorial laravel basic, belajar laravel, panduan belajar laravel">
 
     @yield('title')

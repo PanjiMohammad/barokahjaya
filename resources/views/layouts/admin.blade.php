@@ -10,6 +10,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
   <meta http-equiv="x-ua-compatible" content="ie=edge">
   <meta name="description" content="Barokah Jaya - Aplikasi Ecommerce">
   <meta name="author" content="Barokah Jaya">
+  <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
   <meta name="keyword" content="aplikasi ecommerce laravel, jual beli online, jual produk fashion, ecommerce">
 
   @yield('title')
@@ -63,7 +64,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
     </div>
     <!-- Default to the left -->
     <strong>Copyright &copy; 2025 All rights reserved.
-    
+
   </footer>
 
   <!-- Control Sidebar -->
@@ -144,7 +145,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                         _token: $('input[name="_token"]').val()
                     },
                     beforeSend: function() {
-                        $.blockUI({ 
+                        $.blockUI({
                             message: '<i class="fa fa-spinner"></i>',
                             overlayCSS: {
                                 backgroundColor: '#fff',
@@ -203,7 +204,7 @@ scratch. This page gets rid of all links and provides the needed markup only.
                 });
                 }
             });
-          
+
       });
   });
 </script>

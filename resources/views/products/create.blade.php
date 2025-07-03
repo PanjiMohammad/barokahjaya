@@ -17,7 +17,7 @@
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item">
-                            <a href="{{ route('produk.newIndex') }}">Produk</a>
+                            <a href="{{ route('product.newIndex') }}">Produk</a>
                         </li>
                         <li class="breadcrumb-item active">Tambah Produk</li>
                     </ol>
@@ -46,7 +46,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="description">Deskripsi</label>
-                                    
+
                                     <!-- TAMBAHKAN ID YANG NNTINYA DIGUNAKAN UTK MENGHUBUNGKAN DENGAN CKEDITOR -->
                                     <textarea name="description" id="description" class="form-control" placeholder="Masukkan Deskripsi Produk" rows="5" cols="30"></textarea>
                                     <span class="text-danger" id="description_error"></span>
@@ -63,7 +63,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="category_id">Kategori</label>
-                                    
+
                                     <!-- DATA KATEGORI DIGUNAKAN DISINI, SEHINGGA SETIAP PRODUK USER BISA MEMILIH KATEGORINYA -->
                                     <select name="category_id" id="category_id" class="form-control">
                                         <option value="">Pilih</option>
@@ -136,8 +136,8 @@
                     contentType: false,
                     processData: false,
                     beforeSend: function() {
-                        $('.loader-area').block({ 
-                            message: '<i class="fa fa-spinner fa-spin"></i>', 
+                        $('.loader-area').block({
+                            message: '<i class="fa fa-spinner fa-spin"></i>',
                             overlayCSS: {
                                 backgroundColor: '#fff',
                                 opacity: 0.8,
@@ -148,7 +148,7 @@
                                 padding: 0,
                                 backgroundColor: 'none'
                             }
-                        }); 
+                        });
                     },
                     complete: function() {
                         $('.loader-area').unblock();

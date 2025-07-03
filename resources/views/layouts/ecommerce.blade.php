@@ -4,7 +4,8 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    {{-- <link rel="icon" type="image/x-icon" href="{{ asset('img/rifkidev.ico') }}"> --}}
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <link rel="icon" type="image/x-icon" href="{{ asset('img/rifkidev.ico') }}">
 
     @yield('title')
 

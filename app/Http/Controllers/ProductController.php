@@ -144,10 +144,10 @@ class ProductController extends Controller
 
                 // Simpan ke database
                 $product = Product::create([
-                    'name' => $request->name,
+                    'name' => mb_convert_encoding($request->name, 'UTF-8', 'UTF-8'),
                     'slug' => Str::slug($request->name),
                     'category_id' => $request->category_id,
-                    'description' => $request->description,
+                    'description' => mb_convert_encoding($request->description, 'UTF-8', 'UTF-8'),
                     'image' => $imageUrl,
                     'price' => $request->price,
                     'weight' => $request->weight,

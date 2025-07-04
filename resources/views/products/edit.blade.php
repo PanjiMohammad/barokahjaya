@@ -17,7 +17,7 @@
                     <div class="col-sm-6">
                         <ol class="breadcrumb float-sm-right">
                         <li class="breadcrumb-item">
-                            <a href="{{ route('produk.newIndex') }}">Produk</a>
+                            <a href="{{ route('product.newIndex') }}">Produk</a>
                         </li>
                         <li class="breadcrumb-item active">Edit Produk</li>
                         </ol>
@@ -48,7 +48,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label for="description">Deskripsi</label>
-                                    
+
                                         <!-- TAMBAHKAN ID YANG NNTINYA DIGUNAKAN UTK MENGHUBUNGKAN DENGAN CKEDITOR -->
                                         <textarea name="description" id="description" class="form-control" placeholder="Masukkan Deskripsi">{{ $product->description }}</textarea>
                                         <span class="text-danger" id="description_error"></span>
@@ -85,7 +85,7 @@
                                     </div>
                                     <div class="form-group">
                                         <label for="image">Foto Produk</label>
-                                        <!-- show image -->    
+                                        <!-- show image -->
                                         <div class="mt-2 mb-2">
                                             <img src="{{ asset('/storage/products/' . $product->image) }}" width="100px" height="100px" alt="{{ $product->name }}">
                                         </div>
@@ -97,7 +97,7 @@
                                     </div>
                                 </div>
                             </div>
-                        </div> 
+                        </div>
                         <div class="card-footer">
                             <div class="form-group">
                                 <button class="btn btn-primary float-right">Tambah</button>
@@ -128,7 +128,7 @@
                 .catch(error => {
                     console.error('There was a problem initializing CKEditor:', error);
                 });
-            
+
             $('#edit-product-form').on('submit', function(e) {
                 e.preventDefault();
 
@@ -143,8 +143,8 @@
                     contentType: false,
                     processData: false,
                     beforeSend: function() {
-                        $('.loader-area').block({ 
-                            message: '<i class="fa fa-spinner fa-spin"></i> Loading...', 
+                        $('.loader-area').block({
+                            message: '<i class="fa fa-spinner fa-spin"></i> Loading...',
                             overlayCSS: {
                                 backgroundColor: '#fff',
                                 opacity: 0.8,

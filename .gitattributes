@@ -9,4 +9,5 @@ composer.lock text eol=lf
 *.scss text eol=lf
 *.js text eol=lf
 *.env.example text eol=lf
+* entrypoint.sh text eol=lf
 CHANGELOG.md export-ignore

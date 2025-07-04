@@ -18,6 +18,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
 use DataTables;
 use Carbon\Carbon;
+use App\Helpers\SupabaseStorage;
 
 class ProductController extends Controller
 {
@@ -47,7 +48,7 @@ class ProductController extends Controller
                     <a href="'. route('product.newEdit', $product->id) .'" class="btn btn-sm btn-primary" title="Edit Produk ' . $product->name . '"><span class="fa fa-pencil"></span></a>
                     <button type="button" class="btn btn-sm btn-danger delete-product ml-1" data-index="'.$index.'" data-product-id="'. $product->id .'" title="Hapus Produk ' . $product->name . '"><span class="fa fa-trash"></span></button>
                     <button type="button" class="btn btn-sm btn-info detail-product ml-1" data-index="'.$index.'" data-product-id="'. $product->id .'" title="Detail Produk ' . $product->name . '"><span class="fa fa-eye"></span></button>
- 
+
                     <form id="deleteForm{{ $product->id }}" action="'. route('product.newDestroy', $product->id) .'" method="post" class="d-none">
                         '. method_field('DELETE') . csrf_field() .'
                     </form>
@@ -60,13 +61,13 @@ class ProductController extends Controller
                 return '<img src="'. asset('/storage/products/' . $product->image) .'" alt="'. $product->name .'" class="img-thumbnail rounded" style="width: 110px; height: 100px; object-fit: contain; display: block;">';
             })
             ->editColumn('description', function ($product) {
-                return $product->description; 
+                return $product->description;
             })
             ->editColumn('stock', function ($product) {
-                return $product->stock . ' item'; 
+                return $product->stock . ' item';
             })
             ->editColumn('status', function ($product) {
-                return $product->status_label; 
+                return $product->status_label;
             })
             ->rawColumns(['action', 'image', 'description', 'status', 'stock', 'productName'])
             ->make(true);
@@ -118,7 +119,9 @@ class ProductController extends Controller
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
                 $filename = time() . Str::slug($request->name) . '.' . $file->getClientOriginalExtension();
-                $file->storeAs('public/products', $filename);
+                // $file->storeAs('public/products', $filename);
+
+                $imageUrl = SupabaseStorage::getPublicUrl($filename);
 
                 // Create the product
                 $product = Product::create([
@@ -176,9 +179,9 @@ class ProductController extends Controller
      */
     public function edit($id)
     {
-        $product = Product::find($id); 
-        $category = Category::orderBy('name', 'DESC')->get(); 
-        return view('products.edit', compact('product', 'category')); 
+        $product = Product::find($id);
+        $category = Category::orderBy('name', 'DESC')->get();
+        return view('products.edit', compact('product', 'category'));
     }
 
     /**
@@ -204,24 +207,24 @@ class ProductController extends Controller
             if ($validator->fails()) {
                 return response()->json(['error' => 'Validasi gagal, Harap periksa kembali', 'errors' => $validator->errors(), 'input' => $request->all()], 422);
             }
-            
+
             // redirect to home if couldn't find id's product
             $product = Product::find($request->product_id);
             if (!$product) {
                 return redirect()->back()->with('error', 'Produk tidak ditemukan.');
             }
-            
+
             // get product
             $filename = $product->image;
 
             $currency = $request->price;
             $processedCurrency = intval(str_replace('.', '', str_replace(',', '.', $currency)));
-        
+
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
                 $filename = time() . '.' . $file->getClientOriginalExtension();
                 $file->storeAs('public/products', $filename);
-    
+
                 // hapus file lama
                 if (!empty($product->image)) {
                     Storage::delete('public/products' . $product->image);
@@ -238,16 +241,16 @@ class ProductController extends Controller
                 'image' => $filename,
                 'status' => $request->status,
             ]);
-    
+
             return response()->json(['success' => 'Produk berhasil diperbarui'], 200);
         } catch (\Exception $e) {
             // Log the error message for debugging
             Log::error('Product Update Error: ' . $e->getMessage());
-    
+
             // Return a JSON response with an error message
             return response()->json(['error' => $e->getMessage()], 500);
         }
-    }  
+    }
 
     /**
      * Remove the specified resource from storage.
@@ -257,7 +260,7 @@ class ProductController extends Controller
      */
     public function destroy($id)
     {
-        $product = Product::find($id); 
+        $product = Product::find($id);
         if (!$product) {
             return response()->json(['error' => 'Produk tidak ditemukan'], 404);
         }

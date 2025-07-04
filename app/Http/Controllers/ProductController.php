@@ -18,7 +18,10 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
 use DataTables;
 use Carbon\Carbon;
+
+// urgent
 use App\Helpers\SupabaseStorage;
+use Illuminate\Support\Facades\Http;
 
 class ProductController extends Controller
 {
@@ -117,27 +120,43 @@ class ProductController extends Controller
 
             // Handle file upload
             if ($request->hasFile('image')) {
-                $file = $request->file('image');
-                $filename = time() . Str::slug($request->name) . '.' . $file->getClientOriginalExtension();
-                // $file->storeAs('public/products', $filename);
+            $file = $request->file('image');
 
-                $imageUrl = SupabaseStorage::getPublicUrl($filename);
+            // Buat nama file unik
+            $filename = time() . '_' . Str::slug($request->name) . '.' . $file->getClientOriginalExtension();
+            $path = "images/{$filename}"; // Folder 'images' di dalam bucket 'products'
 
-                // Create the product
+            // Upload file ke Supabase Storage
+            $response = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . env('SUPABASE_SERVICE_ROLE_KEY'),
+                    'Content-Type' => $file->getMimeType(),
+                ])->put(
+                    env('SUPABASE_URL') . "/storage/v1/object/" . env('SUPABASE_BUCKET') . "/{$path}",
+                    file_get_contents($file)
+                );
+
+                if (!$response->successful()) {
+                    return response()->json(['error' => 'Upload ke Supabase gagal'], 500);
+                }
+
+                // Ambil public URL
+                $imageUrl = env('SUPABASE_URL') . "/storage/v1/object/public/" . env('SUPABASE_BUCKET') . "/{$path}";
+
+                // Simpan ke database
                 $product = Product::create([
                     'name' => $request->name,
                     'slug' => Str::slug($request->name),
                     'category_id' => $request->category_id,
                     'description' => $request->description,
-                    'image' => $filename,
+                    'image' => $imageUrl,
                     'price' => $request->price,
                     'weight' => $request->weight,
                     'status' => $request->status,
                 ]);
 
-                return response()->json(['success' => 'Produk berhasil ditambahkan'], 200);
+                return response()->json(['success' => 'Produk berhasil ditambahkan']);
             } else {
-                return response()->json(['error' => 'Gagal mengunggah gambar'], 422);
+                return response()->json(['error' => 'File gambar tidak ditemukan'], 422);
             }
 
         } catch (\Exception $e) {

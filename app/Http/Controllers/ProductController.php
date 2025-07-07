@@ -316,7 +316,7 @@ class ProductController extends Controller
         }
 
         try {
-            $fileData = (new ProductImport)->toArray(public_path('/docs/admin/file-mass/' . $this->filename));
+            $fileData = (new ProductImport)->toArray(public_path('/docs/admin/file-mass/' . $filename));
             $productData = [];
             $errors = [];
             $imageCache = [];
@@ -387,7 +387,7 @@ class ProductController extends Controller
                 Product::insert($productData);
             }
 
-            File::delete(public_path('docs/admin/file-mass/' . $this->filename));
+            File::delete(public_path('docs/admin/file-mass/' . $filename));
 
             return response()->json(['success' => 'Berhasil menambahkan produk'], 200);
 

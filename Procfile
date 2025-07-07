@@ -1,1 +1,2 @@
-web: bash -c "php artisan storage:link || true && php artisan serve --host=0.0.0.0 --port=8080"
+release: php artisan migrate --force && php artisan storage:link
+web: bash -c "php artisan serve --host=0.0.0.0 --port=8080"

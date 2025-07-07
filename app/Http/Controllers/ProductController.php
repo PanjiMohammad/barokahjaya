@@ -61,7 +61,7 @@ class ProductController extends Controller
                 return $product->name . '<span class="ml-2">' . $product->status_type . '</span>';
             })
             ->editColumn('image', function ($product) {
-                return '<img src="'. asset('/images/products/' . $product->image) .'" alt="'. $product->name .'" class="img-thumbnail rounded" style="width: 110px; height: 100px; object-fit: contain; display: block;">';
+                return '<img src="'. asset('/storage/products/' . $product->image) .'" alt="'. $product->name .'" class="img-thumbnail rounded" style="width: 110px; height: 100px; object-fit: contain; display: block;">';
             })
             ->editColumn('description', function ($product) {
                 return $product->description;
@@ -121,9 +121,9 @@ class ProductController extends Controller
             // Handle file upload
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
+
                 $filename = time() . '.' . $file->getClientOriginalExtension();
-                $destinationPath = public_path('/images/products/');
-                $file->move($destinationPath, $filename);
+                $file->storeAs('public/products', $filename);
 
                 // Simpan ke database
                 $product = Product::create([
@@ -144,7 +144,7 @@ class ProductController extends Controller
 
         } catch (\Exception $e) {
             // Catch any exception that occurs and return an error response
-            return response()->json(['error' => 'Terjadi kesalahan : ' . $e->getMessage()], 500);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
@@ -167,10 +167,10 @@ class ProductController extends Controller
             'description' => $product->description,
             'category' => $product->category->name,
             'price' => 'Rp ' . number_format($product->price, 0, ',', '.'),
-            'image' => asset('/images/products/' . $product->image),
+            'image' => asset('/storage/products/' . $product->image),
             'status' => $product->status_label,
             'weight' => $product->weight . 'Gram / Kg'
-        ], 200);
+        ]);
     }
 
     /**
@@ -225,12 +225,11 @@ class ProductController extends Controller
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
                 $filename = time() . '.' . $file->getClientOriginalExtension();
-                $destinationPath = public_path('/images/products/');
-                $file->move($destinationPath, $filename);
+                $file->storeAs('public/products', $filename);
 
                 // hapus file lama
                 if (!empty($product->image)) {
-                    File::delete(public_path('/images/products/' . $filename));
+                    Storage::delete('public/products' . $product->image);
                 }
             }
 
@@ -263,23 +262,16 @@ class ProductController extends Controller
      */
     public function destroy($id)
     {
-        try {
-            $product = Product::find($id);
-            if (!$product) {
-                return response()->json(['error' => 'Produk tidak ditemukan'], 404);
-            }
-
-            // Hapus file gambar dari public/images/products/
-            $imagePath = public_path('images/products/' . $product->image);
-            if ($product->image && File::exists($imagePath)) {
-                File::delete($imagePath);
-            }
-
-            $product->delete();
-            return response()->json(['success' => 'Produk berhasil dihapus'], 200);
-        } catch (\Exception $e) {
-            return response()->json(['error' => 'Terjadi kesalahan : ' . $e->getMessage()], 500);
+        $product = Product::find($id);
+        if (!$product) {
+            return response()->json(['error' => 'Produk tidak ditemukan'], 404);
         }
+
+        if ($product->image && Storage::exists('public/' . $product->image)) {
+            Storage::delete('public/products' . $product->image);
+        }
+        $product->delete();
+        return response()->json(['success' => 'Produk berhasil dihapus'], 200);
     }
 
     // public function massUploadForm()
@@ -307,16 +299,15 @@ class ProductController extends Controller
 
         $file = $request->file('file');
         $filename = time() . '-product.' . $file->getClientOriginalExtension();
-        $destinationPath = public_path('/images/products/');
-        $file->move($destinationPath, $filename);
+        $file->storeAs('public/docs/file-mass', $filename);
 
-        $directory = public_path('/images/products/');
+        $directory = storage_path('app/public/products');
         if (!File::exists($directory)) {
             File::makeDirectory($directory, 0755, true, true);
         }
 
         try {
-            $fileData = (new ProductImport)->toArray(public_path('/docs/admin/file-mass/' . $filename));
+            $fileData = (new ProductImport)->toArray(storage_path('app/public/docs/file-mass/' . $filename));
             $productData = [];
             $errors = [];
             $imageCache = [];
@@ -387,7 +378,7 @@ class ProductController extends Controller
                 Product::insert($productData);
             }
 
-            File::delete(public_path('docs/admin/file-mass/' . $filename));
+            Storage::delete('public/docs/file-mass' . $filename);
 
             return response()->json(['success' => 'Berhasil menambahkan produk'], 200);
 

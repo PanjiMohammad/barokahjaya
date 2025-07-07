@@ -145,8 +145,7 @@ class OrderController extends Controller
             if ($order->status == 0 && $request->hasFile('proof')) {
                 $file = $request->file('proof');
                 $filename = time() . '.' . $file->getClientOriginalExtension();
-                $destinationPath = public_path('/images/proof/');
-                $file->move($destinationPath, $filename);
+                $file->storeAs('public/proof', $filename);
 
                 Payment::create([
                     'order_id' => $order->id,
@@ -190,34 +189,29 @@ class OrderController extends Controller
             }
 
             $baseName = $order->invoice . '-invoice.pdf';
-            $folderPath = public_path('docs/members/invoice');
-            $fullPath = $folderPath . '/' . $baseName;
+            $folderPath = 'public/docs/members/invoice/';
+            $storagePath = $folderPath . $baseName;
 
             // Cek dan ubah nama jika file sudah ada
             $i = 1;
-            while (file_exists($fullPath)) {
+            while (Storage::exists($storagePath)) {
                 $baseName = $order->invoice . '-invoice (' . $i . ').pdf';
-                $fullPath = $folderPath . '/' . $baseName;
+                $storagePath = $folderPath . $baseName;
                 $i++;
             }
 
-            // Buat folder jika belum ada
-            if (!file_exists($folderPath)) {
-                mkdir($folderPath, 0775, true);
-            }
-
-            // Simpan file
+            // Simpan file di storage
             $pdf = PDF::loadView('ecommerce.orders.pdf', compact('order'));
-            file_put_contents($fullPath, $pdf->output());
+            Storage::put($storagePath, $pdf->output());
 
-            if (request()->ajax()) {
-                return response()->json(['success' => 'PDF berhasil disimpan'], 200);
+            if(request()->ajax()) {
+                return response()->json(['success' => 'PDF berhasil diunduh'], 200);
             }
 
             // Download ke browser
-            return response()->download($fullPath, $baseName);
+            return response()->download(storage_path('app/' . $storagePath), $baseName);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Terjadi kesalahan : ' . $e->getMessage()], 500);
         }
     }
 

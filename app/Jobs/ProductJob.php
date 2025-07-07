@@ -43,13 +43,13 @@ class ProductJob implements ShouldQueue
     public function handle()
     {
         // Import data from the Excel file stored in the uploads directory
-        $files = (new ProductImport)->toArray(public_path('/docs/admin/file-mass/' . $this->filename));
+        $files = (new ProductImport)->toArray(storage_path('app/public/docs/file-mass/' . $this->filename));
 
         // Log the imported data for debugging
         Log::info('Imported Data:', $files);
 
         // Ensure the products directory exists
-        $directory = public_path('/images/products/');
+        $directory = storage_path('app/public/products');
         if (!File::exists($directory)) {
             File::makeDirectory($directory, 0755, true, true);
         }
@@ -115,6 +115,6 @@ class ProductJob implements ShouldQueue
         }
 
         // Delete the uploaded file after processing
-        File::delete(public_path('docs/admin/file-mass/' . $this->filename));
+        Storage::delete('public/docs/file-mass/' . $this->filename);
     }
 }

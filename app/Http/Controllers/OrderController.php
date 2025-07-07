@@ -32,9 +32,9 @@ use Illuminate\Support\Facades\Storage;
 
 class OrderController extends Controller
 {
-    public function index() 
+    public function index()
     {
-        return view('orders.index'); 
+        return view('orders.index');
     }
 
     public function datatables(Request $request)
@@ -71,15 +71,15 @@ class OrderController extends Controller
                 ->rawColumns(['details', 'action', 'totalProduct', 'formattedDate'])
                 ->make(true);
     }
-    
-    public function view($invoice) 
+
+    public function view($invoice)
     {
         if (Order::where('invoice', $invoice)->exists()){
             $order = Order::with(['customer.district.city.province', 'return', 'payment', 'details.product'])->withCount('return')->where('invoice', $invoice)->first();
             return view('orders.view', compact('order'));
         }else {
             return redirect()->back();
-        }    
+        }
     }
 
     public function acceptPayment($invoice)
@@ -116,10 +116,10 @@ class OrderController extends Controller
             }
 
             $order = Order::with(['customer'])->find($request->order_id);
-        
+
             if(!$order){
                 return response()->json(['error' => 'Pesanan tidak ditemukan'], 404);
-            } 
+            }
 
             $order->update(['tracking_number' => $request->tracking_number, 'status' => 3]);
 
@@ -131,7 +131,7 @@ class OrderController extends Controller
         }
     }
 
-    public function return($invoice) 
+    public function return($invoice)
     {
         if (Order::where('invoice', $invoice)->exists()){
             $order = Order::with(['return', 'customer'])->where('invoice', $invoice)->first();
@@ -172,7 +172,7 @@ class OrderController extends Controller
         $start = $request->query('start_date') ? Carbon::parse($request->query('start_date'))->startOfDay() : Carbon::now()->startOfMonth()->format('Y-m-d H:i:s');
         $end = $request->query('end_date') ? Carbon::parse($request->query('end_date'))->endOfDay() : Carbon::now()->endOfMonth()->format('Y-m-d H:i:s');
 
-    
+
         $orders = Order::with(['customer.district'])->whereBetween('created_at', [$start, $end])->orderBy('created_at', 'DESC')->get();
 
         return DataTables::of($orders)
@@ -214,7 +214,7 @@ class OrderController extends Controller
             $fileName = "Laporan Pesanan Periode {$startFormatted} - {$endFormatted}.pdf";
 
             $pdf = PDF::loadView('report.orderpdf', compact('orders', 'date'));
-            
+
             $storagePath = 'public/docs/reports/reports/';
             $filePath = $storagePath . $fileName;
             $i = 1;
@@ -245,7 +245,7 @@ class OrderController extends Controller
         $start = $request->query('start_date') ? Carbon::parse($request->query('start_date'))->startOfDay() : Carbon::now()->startOfMonth()->format('Y-m-d H:i:s');
         $end = $request->query('end_date') ? Carbon::parse($request->query('end_date'))->endOfDay() : Carbon::now()->endOfMonth()->format('Y-m-d H:i:s');
         $orders = Order::with(['customer.district'])->has('return')->whereBetween('created_at', [$start, $end])->get();
-   
+
         return DataTables::of($orders)
             ->editColumn('invoice', function($order) {
                 return $order->invoice;
@@ -269,8 +269,8 @@ class OrderController extends Controller
                 return optional($order->return->first())->reason ?? '-';
             })
             ->editColumn('dates', function($order) {
-                return optional($order->return->first())->created_at 
-                    ? Carbon::parse($order->return->first()->created_at)->locale('id')->translatedFormat('l, d F Y') 
+                return optional($order->return->first())->created_at
+                    ? Carbon::parse($order->return->first()->created_at)->locale('id')->translatedFormat('l, d F Y')
                     : '-';
             })
             ->addColumn('refundTransfer', function($order){
@@ -296,7 +296,7 @@ class OrderController extends Controller
             $fileName = "Laporan Pengembalian Pesanan Periode {$startFormatted} - {$endFormatted}.pdf";
 
             $pdf = PDF::loadView('report.returnpdf', compact('orders', 'date'));
-            
+
             $storagePath = 'public/docs/reports/returns/';
             $filePath = $storagePath . $fileName;
             $i = 1;
@@ -312,7 +312,7 @@ class OrderController extends Controller
             }
 
             return $pdf->download($fileName);
-        } catch (\Exception $e) {  
+        } catch (\Exception $e) {
             return response()->json(['error' => 'Gagal membuat PDF: ' . $e->getMessage()], 500);
         }
     }

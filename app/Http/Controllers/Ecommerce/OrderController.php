@@ -38,7 +38,7 @@ class OrderController extends Controller
                 $detailUrl = route('customer.view_order', $order->invoice);
                 $returnUrl = route('customer.order_return', $order->invoice);
                 $acceptForm = '';
- 
+
                 if ($order->status == 3 && $order->return_count == 0) {
                     $acceptForm = '
                         <form action="' . route('customer.order_accept') . '" id="acceptOrder" method="POST">
@@ -92,8 +92,8 @@ class OrderController extends Controller
             }
         }else {
             return redirect()->back();
-        }    
-        
+        }
+
         return redirect(route('customer.orders'))->with(['error' => 'Anda Tidak Diizinkan Untuk Mengakses Order Orang Lain']);
     }
 
@@ -110,7 +110,7 @@ class OrderController extends Controller
             }
         }else {
             return redirect()->back();
-        }  
+        }
 
         return redirect()->back()->with(['error' => 'Anda Tidak Diizinkan Untuk Mengakses Payment Order Orang Lain']);
     }
@@ -136,7 +136,7 @@ class OrderController extends Controller
         DB::beginTransaction();
         try {
             $order = Order::where('invoice', $request->invoice)->first();
-            
+
             if ($order->total != $request->amount) {
                 // return redirect()->back()->with(['error' => 'Error, Pembayaran Harus Sama Dengan Tagihan']);
                 return response()->json(['error' => 'Error, Pembayaran Harus Sama Dengan Tagihan'], 400);
@@ -145,7 +145,8 @@ class OrderController extends Controller
             if ($order->status == 0 && $request->hasFile('proof')) {
                 $file = $request->file('proof');
                 $filename = time() . '.' . $file->getClientOriginalExtension();
-                $file->storeAs('public/proof', $filename);
+                $destinationPath = public_path('/images/proof/');
+                $file->move($destinationPath, $filename);
 
                 Payment::create([
                     'order_id' => $order->id,
@@ -156,7 +157,7 @@ class OrderController extends Controller
                     'proof' => $filename,
                     'status' => false
                 ]);
-                
+
                 $order->update(['status' => 1]);
                 DB::commit();
                 // return redirect()->route('customer.view_order', $order->invoice)->with(['success' => 'Pesanan Dikonfirmasi']);
@@ -173,7 +174,7 @@ class OrderController extends Controller
         }
     }
 
-    public function pdf($invoice) 
+    public function pdf($invoice)
     {
         try {
             $order = Order::with(['district.city.province', 'details', 'details.product', 'payment'])
@@ -189,29 +190,34 @@ class OrderController extends Controller
             }
 
             $baseName = $order->invoice . '-invoice.pdf';
-            $folderPath = 'public/docs/members/invoice/';
-            $storagePath = $folderPath . $baseName;
+            $folderPath = public_path('docs/members/invoice');
+            $fullPath = $folderPath . '/' . $baseName;
 
             // Cek dan ubah nama jika file sudah ada
             $i = 1;
-            while (Storage::exists($storagePath)) {
+            while (file_exists($fullPath)) {
                 $baseName = $order->invoice . '-invoice (' . $i . ').pdf';
-                $storagePath = $folderPath . $baseName;
+                $fullPath = $folderPath . '/' . $baseName;
                 $i++;
             }
 
-            // Simpan file di storage
-            $pdf = PDF::loadView('ecommerce.orders.pdf', compact('order'));
-            Storage::put($storagePath, $pdf->output());
+            // Buat folder jika belum ada
+            if (!file_exists($folderPath)) {
+                mkdir($folderPath, 0775, true);
+            }
 
-            if(request()->ajax()) {
-                return response()->json(['success' => 'PDF berhasil diunduh'], 200);
-            }   
+            // Simpan file
+            $pdf = PDF::loadView('ecommerce.orders.pdf', compact('order'));
+            file_put_contents($fullPath, $pdf->output());
+
+            if (request()->ajax()) {
+                return response()->json(['success' => 'PDF berhasil disimpan'], 200);
+            }
 
             // Download ke browser
-            return response()->download(storage_path('app/' . $storagePath), $baseName);
+            return response()->download($fullPath, $baseName);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Terjadi kesalahan : ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Terjadi kesalahan: ' . $e->getMessage()], 500);
         }
     }
 
@@ -257,7 +263,7 @@ class OrderController extends Controller
             }
         }else {
             return redirect()->back();
-        }  
+        }
 
         return redirect()->back()->with(['error' => 'Anda Tidak Diizinkan Untuk Mengakses Return Order Orang Lain']);
     }
@@ -275,7 +281,7 @@ class OrderController extends Controller
                 return response()->json(['error' => 'Validasi gagal, Harap periksa kembali', 'errors' => $validator->errors(), 'input' => $request->all()], 422);
             }
 
-            $order = Order::find($request->order_id); 
+            $order = Order::find($request->order_id);
             $return = OrderReturn::where('order_id', $request->order_id)->first();
             if ($return) {
                 return redirect()->back()->with(['error' => 'Permintaan Refund Dalam Proses']);
@@ -289,7 +295,7 @@ class OrderController extends Controller
                 $file = $request->file('photo');
                 $filename = time() . '.' . $file->getClientOriginalExtension();
                 $file->storeAs('public/returns', $filename);
-            
+
                 OrderReturn::create([
                     'order_id' => $request->order_id,
                     'photo' => $filename,
@@ -299,7 +305,7 @@ class OrderController extends Controller
                 ]);
 
                 //kirim pesan return
-                // $this->sendMessage($order->invoice, $request->reason); 
+                // $this->sendMessage($order->invoice, $request->reason);
 
                 // return redirect()->route('customer.orders')->with(['success' => 'Permintaan Refund Dikirim']);
                 return response()->json(['success' => 'Berhasil mengirim permintaan refund', 'redirect' => route('customer.orders')], 200);
@@ -313,7 +319,7 @@ class OrderController extends Controller
     private function getTelegram($url, $params)
     {
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url . $params); 
+        curl_setopt($ch, CURLOPT_URL, $url . $params);
 
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_TIMEOUT, 3);
@@ -324,7 +330,7 @@ class OrderController extends Controller
 
     private function sendMessage($invoice, $reason)
     {
-        $key = env('TELEGRAM_KEY'); 
+        $key = env('TELEGRAM_KEY');
 
         $chat = $this->getTelegram('https://api.telegram.org/'. $key .'/getUpdates', '');
 
@@ -333,7 +339,7 @@ class OrderController extends Controller
             $chat_id = $chat['result'][0]['message']['chat']['id'];
 
             $text = 'Hai Admin E-Commerce, OrderID '.$invoice.' Melakukan Permintaan Refund Dengan Alasan "'. $reason.'", Silahkan Segera Dicek Ya!';
-        
+
             //kirim request ke telegram untuk mengirim pesan
             return $this->getTelegram('https://api.telegram.org/'. $key .'/sendMessage', '?chat_id=' . $chat_id . '&text=' . $text);
         }

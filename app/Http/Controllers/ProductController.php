@@ -120,35 +120,18 @@ class ProductController extends Controller
 
             // Handle file upload
             if ($request->hasFile('image')) {
-            $file = $request->file('image');
-
-            // Buat nama file unik
-            $filename = time() . '_' . Str::slug($request->name) . '.' . $file->getClientOriginalExtension();
-            $path = "images/{$filename}"; // Folder 'images' di dalam bucket 'products'
-
-            // Upload file ke Supabase Storage
-            $response = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . env('SUPABASE_SERVICE_ROLE_KEY'),
-                    'Content-Type' => $file->getMimeType(),
-                ])->put(
-                    env('SUPABASE_URL') . "/storage/v1/object/" . env('SUPABASE_BUCKET') . "/{$path}",
-                    file_get_contents($file)
-                );
-
-                if (!$response->successful()) {
-                    return response()->json(['error' => 'Upload ke Supabase gagal'], 500);
-                }
-
-                // Ambil public URL
-                $imageUrl = env('SUPABASE_URL') . "/storage/v1/object/public/" . env('SUPABASE_BUCKET') . "/{$path}";
+                $file = $request->file('image');
+                $filename = time() . '.' . $file->getClientOriginalExtension();
+                $destinationPath = public_path('/images/products/');
+                $file->move($destinationPath, $filename);
 
                 // Simpan ke database
                 $product = Product::create([
-                    'name' => mb_convert_encoding($request->name, 'UTF-8', 'UTF-8'),
+                    'name' => $request->name,
                     'slug' => Str::slug($request->name),
                     'category_id' => $request->category_id,
-                    'description' => mb_convert_encoding($request->description, 'UTF-8', 'UTF-8'),
-                    'image' => $imageUrl,
+                    'description' => $request->description,
+                    'image' => $filename,
                     'price' => $request->price,
                     'weight' => $request->weight,
                     'status' => $request->status,
@@ -161,7 +144,7 @@ class ProductController extends Controller
 
         } catch (\Exception $e) {
             // Catch any exception that occurs and return an error response
-            return response()->json(['error' => $e->getMessage()], 500);
+            return response()->json(['error' => 'Terjadi kesalahan : ' . $e->getMessage()], 500);
         }
     }
 
@@ -187,7 +170,7 @@ class ProductController extends Controller
             'image' => asset('/storage/products/' . $product->image),
             'status' => $product->status_label,
             'weight' => $product->weight . 'Gram / Kg'
-        ]);
+        ], 200);
     }
 
     /**

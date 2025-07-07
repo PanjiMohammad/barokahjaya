@@ -11,3 +11,9 @@ Homestead.json
 Homestead.yaml
 npm-debug.log
 yarn-error.log
+
+# Allow specific storage folders
+!/storage
+!/storage/app
+!/storage/app/public
+!/storage/app/docs

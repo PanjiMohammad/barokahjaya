@@ -75,7 +75,7 @@
                                                 <td>{!! optional($order->return->first())->status_label !!}</td>
                                             </tr>
                                         </table>
-                                        
+
                                         @if (optional($order->return->first())->status == 0)
                                             <form action="{{ route('orders.new_approve_return') }}" id="approveForm" method="post">
                                                 @csrf
@@ -96,7 +96,7 @@
                                     </div>
                                     <div class="col-md-6">
                                         <h4>Foto Barang Return</h4>
-                                        <img src="{{ asset('storage/returns/' . optional($order->return->first())->photo) }}" class="img-responsive" height="200" alt="">
+                                        <img src="{{ asset('/images/proof/' . optional($order->return->first())->photo) }}" class="img-responsive" height="200" alt="">
                                     </div>
                                 </div>
                             </div>
@@ -111,7 +111,7 @@
 @section('js')
     <script>
         $(document).ready(function(){
-         
+
             $('#approveForm').on('submit', function(e){
                 e.preventDefault();
 
@@ -122,7 +122,7 @@
                     url: $(this).attr('action'),
                     data: formData,
                     beforeSend: function() {
-                        $('.loader-area').block({ 
+                        $('.loader-area').block({
                             message: '<i class="fa fa-spinner fa-spin"></i>',
                             overlayCSS: {
                                 backgroundColor: '#fff',

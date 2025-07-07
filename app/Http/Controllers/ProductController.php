@@ -61,7 +61,7 @@ class ProductController extends Controller
                 return $product->name . '<span class="ml-2">' . $product->status_type . '</span>';
             })
             ->editColumn('image', function ($product) {
-                return '<img src="'. asset('/storage/products/' . $product->image) .'" alt="'. $product->name .'" class="img-thumbnail rounded" style="width: 110px; height: 100px; object-fit: contain; display: block;">';
+                return '<img src="'. asset('/images/products/' . $product->image) .'" alt="'. $product->name .'" class="img-thumbnail rounded" style="width: 110px; height: 100px; object-fit: contain; display: block;">';
             })
             ->editColumn('description', function ($product) {
                 return $product->description;
@@ -167,7 +167,7 @@ class ProductController extends Controller
             'description' => $product->description,
             'category' => $product->category->name,
             'price' => 'Rp ' . number_format($product->price, 0, ',', '.'),
-            'image' => asset('/storage/products/' . $product->image),
+            'image' => asset('/images/products/' . $product->image),
             'status' => $product->status_label,
             'weight' => $product->weight . 'Gram / Kg'
         ], 200);
@@ -225,11 +225,12 @@ class ProductController extends Controller
             if ($request->hasFile('image')) {
                 $file = $request->file('image');
                 $filename = time() . '.' . $file->getClientOriginalExtension();
-                $file->storeAs('public/products', $filename);
+                $destinationPath = public_path('/images/products/');
+                $file->move($destinationPath, $filename);
 
                 // hapus file lama
                 if (!empty($product->image)) {
-                    Storage::delete('public/products' . $product->image);
+                    File::delete(public_path('/images/products/' . $filename));
                 }
             }
 
@@ -262,16 +263,23 @@ class ProductController extends Controller
      */
     public function destroy($id)
     {
-        $product = Product::find($id);
-        if (!$product) {
-            return response()->json(['error' => 'Produk tidak ditemukan'], 404);
-        }
+        try {
+            $product = Product::find($id);
+            if (!$product) {
+                return response()->json(['error' => 'Produk tidak ditemukan'], 404);
+            }
 
-        if ($product->image && Storage::exists('public/' . $product->image)) {
-            Storage::delete('public/products' . $product->image);
+            // Hapus file gambar dari public/images/products/
+            $imagePath = public_path('images/products/' . $product->image);
+            if ($product->image && File::exists($imagePath)) {
+                File::delete($imagePath);
+            }
+
+            $product->delete();
+            return response()->json(['success' => 'Produk berhasil dihapus'], 200);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Terjadi kesalahan : ' . $e->getMessage()], 500);
         }
-        $product->delete();
-        return response()->json(['success' => 'Produk berhasil dihapus'], 200);
     }
 
     // public function massUploadForm()
@@ -299,15 +307,16 @@ class ProductController extends Controller
 
         $file = $request->file('file');
         $filename = time() . '-product.' . $file->getClientOriginalExtension();
-        $file->storeAs('public/docs/file-mass', $filename);
+        $destinationPath = public_path('/images/products/');
+        $file->move($destinationPath, $filename);
 
-        $directory = storage_path('app/public/products');
+        $directory = public_path('/images/products/');
         if (!File::exists($directory)) {
             File::makeDirectory($directory, 0755, true, true);
         }
 
         try {
-            $fileData = (new ProductImport)->toArray(storage_path('app/public/docs/file-mass/' . $filename));
+            $fileData = (new ProductImport)->toArray(public_path('/docs/admin/file-mass/' . $this->filename));
             $productData = [];
             $errors = [];
             $imageCache = [];
@@ -378,7 +387,7 @@ class ProductController extends Controller
                 Product::insert($productData);
             }
 
-            Storage::delete('public/docs/file-mass' . $filename);
+            File::delete(public_path('docs/admin/file-mass/' . $this->filename));
 
             return response()->json(['success' => 'Berhasil menambahkan produk'], 200);
 
